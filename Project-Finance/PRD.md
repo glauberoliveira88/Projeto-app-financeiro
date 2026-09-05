@@ -1,395 +1,212 @@
-Atue como Gerente de Produto e Analista de Sistemas sênior.
-
-Seu objetivo é consolidar tudo o que foi discutido, alinhado, refinado e aprovado ao longo desta conversa e transformar em um Documento de Requisitos do Produto, também chamado de PRD.
-
-O PRD deve ser puramente funcional.
-
-Isso significa que ele deve explicar:
-
-- o que o sistema deve fazer;
-- qual problema ele resolve;
-- quem usará o sistema;
-- quais funcionalidades fazem parte da primeira versão;
-- quais regras precisam ser respeitadas;
-- quais informações o sistema precisa controlar;
-- quais fluxos principais precisam existir;
-- quais pontos ainda precisam ser esclarecidos antes da próxima etapa.
-
-Não defina tecnologias, linguagens de programação, banco de dados, bibliotecas, frameworks, hospedagem, arquitetura de código, estrutura de pastas ou detalhes técnicos de implementação.
-
-Essas decisões serão tomadas depois, no FSD.
-
-Use linguagem clara, didática e acessível para pessoas que não sabem programar.
-
-Explique termos técnicos quando eles aparecerem.
-
-Analise minuciosamente todo o histórico desta conversa. Use apenas informações que tenham sido discutidas, aprovadas ou claramente confirmadas pelo usuário.
-
-Não adicione funcionalidades novas apenas porque elas são comuns em sistemas parecidos.
-
-Se identificar uma ideia interessante, mas que não foi aprovada, coloque-a como sugestão ou ponto pendente. Não coloque como parte confirmada da primeira versão.
-
-Se encontrar dúvidas, lacunas, ambiguidades ou contradições, registre isso na seção "Pontos Pendentes Antes do FSD".
-
-Organize o PRD nas seções abaixo.
-
----
-
 # DOCUMENTO DE REQUISITOS DO PRODUTO (PRD)
 
 ## 1. Visão Geral do Produto
 
-Explique, de forma simples, qual sistema será criado.
-
-Inclua:
-
-- nome provisório do sistema, se tiver sido definido;
-- descrição resumida do sistema;
-- público principal que usará o sistema;
-- principal benefício esperado;
-- contexto geral de uso.
-
-Se o nome do sistema ainda não tiver sido definido, use um nome provisório coerente com a conversa e informe que ele pode ser alterado depois.
-
-## 2. Problema que o Sistema Resolve
-
-Descreva o cenário atual sem o sistema.
-
-Explique quais dores, dificuldades, riscos, retrabalhos, perdas de tempo ou falhas de controle este sistema pretende reduzir.
-
-Considere, quando fizer sentido para o tipo de sistema discutido:
-
-- atividades feitas manualmente;
-- informações espalhadas em vários lugares;
-- dificuldade para acompanhar prazos, status, etapas ou responsáveis;
-- risco de erros, esquecimentos ou retrabalho;
-- falta de visão clara para tomada de decisão;
-- dificuldade para encontrar registros, documentos ou históricos;
-- falta de controle sobre quem fez alterações importantes.
-
-Adapte a explicação ao sistema discutido nesta conversa.
-
-Não use exemplos de outro tipo de sistema.
-
-## 3. Objetivos do Sistema
-
-Liste os objetivos principais do sistema.
-
-Os objetivos devem explicar o que o sistema precisa alcançar para ser considerado útil.
-
-Separe em:
-
-### Objetivo principal
-
-Explique o objetivo central do sistema em uma frase clara.
-
-### Objetivos específicos
-
-Liste objetivos menores que ajudam a alcançar o objetivo principal.
-
-Cada objetivo específico deve estar ligado a uma necessidade real discutida na conversa.
-
-## 4. Personas e Perfis de Usuário
-
-Identifique os perfis de usuário que utilizarão o sistema.
-
-Persona é um perfil de usuário que representa um tipo de pessoa que vai usar o sistema.
-
-Para cada perfil, explique:
-
-- quem é esse usuário;
-- o que ele espera fazer no sistema;
-- quais permissões básicas ele deve ter;
-- quais ações ele não deve poder realizar, se isso já tiver sido definido.
-
-Use uma tabela com as colunas:
-
-| Perfil | Descrição simples | Principais ações no sistema | Permissões básicas |
-| ------ | ----------------- | --------------------------- | ------------------ |
-
-Inclua apenas perfis discutidos ou aprovados na conversa.
-
-Se algum perfil parecer necessário, mas não tiver sido confirmado, registre isso em "Pontos Pendentes Antes do FSD".
-
-## 5. Escopo da Primeira Versão
-
-Liste todas as funcionalidades confirmadas para a primeira versão do sistema.
-
-Escopo é o conjunto de funcionalidades que fará parte desta versão do projeto.
-
-Use apenas funcionalidades que tenham sido discutidas, aprovadas ou claramente confirmadas pelo usuário.
-
-Não adicione funcionalidades novas apenas porque são comuns em sistemas parecidos.
-
-Agrupe as funcionalidades por áreas funcionais.
-
-Área funcional é um grupo de funcionalidades relacionadas ao mesmo assunto ou parte do sistema.
-
-Exemplos genéricos de áreas funcionais:
-
-- cadastros principais;
-- operação principal do sistema;
-- acompanhamento e consultas;
-- relatórios;
-- administração do sistema;
-- configurações;
-- permissões de acesso;
-- comunicação;
-- integrações;
-- arquivos e documentos;
-- histórico e auditoria.
-
-Crie os nomes das áreas conforme o tipo de sistema discutido na conversa.
-
-Para cada funcionalidade, descreva brevemente:
-
-- o que ela permite fazer;
-- quem normalmente usará essa funcionalidade;
-- qual problema ela ajuda a resolver;
-- se existe alguma regra de negócio já definida para ela.
-
-Se houver dúvida sobre uma funcionalidade estar ou não confirmada para a primeira versão, coloque essa dúvida na seção "Pontos Pendentes Antes do FSD" em vez de assumir.
-
-## 6. Funcionalidades Fora de Escopo
-
-Liste as funcionalidades, ideias ou melhorias que não farão parte da primeira versão.
-
-Fora de escopo significa que o item não será desenvolvido agora.
-
-Inclua nesta seção:
-
-- funcionalidades discutidas, mas adiadas;
-- ideias sugeridas pela IA, mas não aprovadas pelo usuário;
-- recursos considerados avançados demais para a primeira versão;
-- integrações, automações ou melhorias que dependem de uma etapa futura.
-
-Explique brevemente por que cada item ficou fora da primeira versão, quando essa razão estiver clara na conversa.
-
-Se não houver itens fora de escopo definidos, declare isso explicitamente.
-
-## 7. Regras de Negócio
-
-Liste as regras que definem como o sistema deve funcionar.
-
-Regra de negócio é uma regra prática do funcionamento do sistema.
-
-Exemplos genéricos de regras de negócio:
-
-- quem pode realizar determinada ação;
-- quando uma informação pode ou não ser alterada;
-- quais dados são obrigatórios;
-- quais situações exigem confirmação;
-- quais registros devem ficar visíveis ou bloqueados;
-- quais ações precisam gerar histórico;
-- quais limites ou condições precisam ser respeitados.
-
-Organize as regras por assunto, quando fizer sentido.
-
-Use apenas regras discutidas, aprovadas ou claramente derivadas das decisões tomadas na conversa.
-
-Se uma regra parecer necessária, mas não tiver sido confirmada, registre como ponto pendente.
-
-## 8. Informações que o Sistema Precisa Controlar
-
-Liste as principais informações que o sistema precisa armazenar, consultar ou controlar.
-
-Não transforme esta seção em modelagem de banco de dados.
-
-Neste momento, não crie tabelas, campos técnicos, tipos de dados ou relacionamentos de banco.
-
-Explique de forma funcional.
-
-Use uma tabela com as colunas:
-
-| Informação | Para que serve no sistema | Observações importantes |
-| ---------- | ------------------------- | ----------------------- |
-
-Exemplos genéricos de informações que podem existir em sistemas:
-
-- usuários;
-- perfis de acesso;
-- registros principais do negócio;
-- categorias ou classificações;
-- arquivos ou anexos;
-- status;
-- histórico de alterações;
-- configurações;
-- comentários ou observações;
-- notificações;
-- relatórios ou indicadores.
-
-Adapte a lista conforme o sistema discutido nesta conversa.
-
-Inclua apenas informações necessárias para as funcionalidades confirmadas.
-
-## 9. Fluxos Principais de Uso
-
-Descreva os principais fluxos de uso do sistema em linguagem simples.
-
-Fluxo de uso é a sequência de passos que mostra como o usuário realiza uma tarefa dentro do sistema.
-
-Inclua os fluxos mais importantes para a primeira versão.
-
-Para cada fluxo, use este formato:
-
-### Nome do fluxo
-
-1. O usuário acessa a área correspondente.
-2. O usuário executa a ação principal.
-3. O sistema solicita ou exibe as informações necessárias.
-4. O usuário confirma a ação.
-5. O sistema valida as informações.
-6. O sistema registra ou atualiza a informação.
-7. O sistema exibe o resultado esperado.
-
-Adapte os passos ao tipo de funcionalidade descrita.
-
-Não invente telas, campos ou detalhes técnicos que não tenham sido definidos.
-
-Se algum fluxo depender de uma decisão ainda não confirmada, registre isso em "Pontos Pendentes Antes do FSD".
-
-## 10. Histórias de Usuário
-
-Crie histórias de usuário para as funcionalidades principais da primeira versão.
-
-História de usuário é uma frase simples que explica o que um perfil de usuário quer fazer e qual benefício espera obter.
-
-Use o formato:
-
-"Como [perfil de usuário], eu quero [funcionalidade] para [benefício]."
-
-Crie pelo menos uma história de usuário para cada funcionalidade importante confirmada para a primeira versão.
-
-Use apenas perfis e funcionalidades compatíveis com o que foi discutido nesta conversa.
-
-## 11. Critérios de Aceitação
-
-Crie critérios de aceitação para as funcionalidades mais importantes.
-
-Critérios de aceitação são condições que ajudam a verificar se uma funcionalidade foi feita corretamente.
-
-Use formato de checklist.
-
-Para cada funcionalidade importante, inclua critérios objetivos como:
-
-- [ ] O usuário consegue realizar a ação principal da funcionalidade.
-- [ ] O sistema impede o salvamento quando informações obrigatórias não são preenchidas.
-- [ ] O sistema exibe mensagens claras quando algo precisa ser corrigido.
-- [ ] O sistema mostra o registro criado ou atualizado nas consultas correspondentes.
-- [ ] O sistema respeita as permissões definidas para cada perfil de usuário.
-- [ ] O sistema registra histórico quando essa regra tiver sido definida.
-
-Adapte os critérios ao funcionamento do sistema discutido.
-
-Não inclua critérios técnicos de programação, banco de dados, performance ou segurança técnica nesta etapa.
-
-## 12. Consultas, Relatórios e Indicadores
-
-Descreva quais informações o usuário precisa consultar, filtrar, acompanhar ou visualizar.
-
-Use esta seção apenas se consultas, relatórios, painéis, indicadores ou listagens tiverem sido discutidos ou forem necessários para as funcionalidades confirmadas.
-
-Não defina layout visual detalhado.
-
-Explique apenas:
-
-- quais informações precisam ser exibidas;
-- quais filtros ou buscas são importantes;
-- quais perfis devem acessar essas informações;
-- quais decisões essas informações ajudam a tomar.
-
-Se o sistema não precisar de relatórios ou indicadores na primeira versão, declare isso explicitamente.
-
-## 13. Permissões e Segurança Funcional
-
-Descreva as permissões básicas por perfil de usuário.
-
-Segurança funcional significa definir o que cada perfil pode ou não pode fazer dentro do sistema.
-
-Não entre em segurança técnica, criptografia, código, banco de dados, infraestrutura ou implementação.
-
-Use uma tabela com as colunas:
-
-| Perfil | Pode fazer | Não pode fazer | Observações |
-| ------ | ---------- | -------------- | ----------- |
-
-Considere ações como:
-
-- visualizar;
-- cadastrar;
-- editar;
-- excluir;
-- aprovar;
-- cancelar;
-- configurar;
-- gerenciar usuários;
-- acessar relatórios;
-- visualizar histórico;
-- importar ou exportar informações.
-
-Adapte as permissões ao sistema discutido nesta conversa.
-
-Se alguma permissão não estiver clara, registre como ponto pendente.
-
-## 14. Limitações da Primeira Versão
-
-Explique as limitações assumidas para manter a primeira versão simples, viável e coerente com o que foi aprovado.
-
-Limitação é algo que o sistema não fará agora ou fará de forma simplificada.
-
-Inclua apenas limitações compatíveis com a conversa.
-
-Exemplos genéricos de limitações:
-
-- não haverá integração com sistemas externos;
-- não haverá aplicativo mobile;
-- não haverá automações avançadas;
-- não haverá múltiplas unidades, empresas ou ambientes, salvo se isso tiver sido aprovado;
-- não haverá personalizações avançadas;
-- não haverá importação ou exportação de dados, salvo se isso tiver sido aprovado;
-- não haverá fluxos de aprovação complexos, salvo se isso tiver sido aprovado.
-
-Adapte esta seção ao sistema discutido.
-
-## 15. Pontos Pendentes Antes do FSD
-
-Liste dúvidas, ambiguidades, decisões abertas ou contradições que ainda precisam ser resolvidas antes da criação do FSD.
-
-O FSD será o documento usado para orientar a IA codificadora, por isso não deve nascer com dúvidas importantes em aberto.
-
-Inclua pontos pendentes quando houver dúvida sobre:
-
-- regra de negócio;
-- permissão de usuário;
-- fluxo principal;
-- funcionalidade da primeira versão;
-- item fora de escopo;
-- informação que o sistema precisa controlar;
-- comportamento esperado em situações especiais.
-
-Se não houver dúvidas pendentes, declare explicitamente:
-
-"Não foram identificadas dúvidas funcionais pendentes para a criação do FSD."
-
-## 16. Resumo Final do PRD
-
-Finalize com um resumo curto explicando:
-
-- o que será construído;
-- quem usará;
-- quais são as principais funcionalidades;
-- o que ficará fora da primeira versão;
-- quais pontos ainda precisam ser confirmados, se houver;
-- se o projeto está pronto ou não para avançar para o FSD.
+* **Nome provisório do sistema:** FinançasSimples (sujeito a alteração posterior).
+* **Descrição resumida do sistema:** Sistema web de gestão financeira pessoal focado em simplicidade, usabilidade e agilidade, funcionando como um painel unificado para o controle de receitas, despesas, carteiras e transferências.
+* **Público principal que usará o sistema:** Pessoas físicas que desejam organizar sua vida financeira de forma prática, sem termos contábeis complexos.
+* **Principal benefício esperado:** Proporcionar uma visão rápida, visual e organizada do orçamento, respondendo com facilidade a perguntas cotidianas sobre saldos, gastos e pendências.
+* **Contexto geral de uso:** Uso diário e estritamente individual por painel, acessível tanto por computadores quanto por celulares de forma totalmente responsiva, com suporte a temas claro e escuro.
 
 ---
 
-Gere o documento final em Markdown, com títulos claros, listas, tabelas e exemplos apenas quando eles ajudarem a explicar o próprio sistema discutido nesta conversa.
+## 2. Problema que o Sistema Resolve
 
-Não crie o FSD neste momento.
+Sem o sistema, o controle financeiro pessoal costuma ser descentralizado, propenso a erros e cansativo. As principais dificuldades enfrentadas pelo usuário incluem:
 
-Não defina tecnologia neste momento.
+* **Informações espalhadas:** Anotações em planilhas complexas, blocos de notas ou papel, dificultando a visão consolidada do dinheiro.
+* **Falta de clareza no orçamento:** Dificuldade para identificar rapidamente se o mês fechará no positivo ou no negativo e quais categorias consomem mais recursos.
+* **Risco de esquecimentos:** Falta de acompanhamento visual claro para contas pendentes ou próximas do vencimento, gerando atrasos.
+* **Retrabalho operacional:** Necessidade de redigitar manualmente despesas fixas recorrentes todos os meses.
+* **Complexidade excessiva:** Ferramentas de mercado carregadas de termos contábeis avançados que desmotivam o uso diário.
 
-Não invente requisitos.
+---
 
-Quando algo não estiver claro, registre como ponto pendente em vez de assumir.
+## 3. Objetivos do Sistema
+
+### Objetivo principal
+
+Ajudar a organizar a vida financeira do usuário de forma simples, visual e prática, permitindo o controle completo de entradas, saídas e saldos sem complicação.
+
+### Objetivos específicos
+
+* Permitir o registro ágil de receitas, despesas e transferências entre contas próprias.
+* Organizar as movimentações por categorias personalizáveis e formas de pagamento básicas.
+* Exibir um painel resumo (Dashboard) com saldos mensais claros e gráficos simples de despesas por categoria.
+* Automatizar a geração de lançamentos recorrentes (fixos) ao virar o mês.
+* Alertar visualmente o usuário sobre contas próximas do vencimento ou já vencidas.
+* Monitorar tetos de gastos por categoria com alertas visuais de estouro de orçamento.
+* Oferecer segurança e praticidade de acesso via login tradicional ou conta Google.
+
+---
+
+## 4. Personas e Perfil de Usuário
+
+| Perfil | Descrição simples | Principais ações no sistema | Permissões básicas |
+| --- | --- | --- | --- |
+| **Usuário Pessoal** | Pessoa física que gerencia o próprio orçamento e deseja praticidade no controle de suas finanças diárias. | Cadastrar contas, gerenciar categorias, registrar receitas/despesas/transferências, acompanhar o painel e filtrar lançamentos. | Acesso total e exclusivo ao seu próprio painel de dados financeiros. |
+
+---
+
+## 5. Escopo da Primeira Versão
+
+### Área Funcional: Autenticação e Acesso
+
+* **Login e Cadastro:** Permite criar conta e acessar o sistema via e-mail e senha tradicionais (com recuperação de senha por e-mail) ou de forma automática integrada com a conta Google. A sessão permanece ativa até o logout manual.
+
+### Área Funcional: Painel Principal (Dashboard)
+
+* **Indicadores do Mês:** Exibição clara do saldo do mês, total de receitas e total de despesas.
+* **Gráfico de Despesas:** Gráfico de barras simples e monocromático dividindo as despesas por categoria.
+* **Alerta de Vencimentos:** Bloco de destaque visual para contas próximas do vencimento ou em atraso.
+
+### Área Funcional: Gestão de Lançamentos
+
+* **Cadastro de Movimentações:** Registro manual de receitas, despesas e transferências informando valor, data, descrição, categoria, forma de pagamento básica, status (pago/pendente) e observações textuais opcionais.
+* **Edição e Exclusão:** Liberdade total para editar ou excluir qualquer lançamento a qualquer momento.
+* **Busca e Filtros:** Barra de pesquisa por texto e filtros por período (navegação livre por meses passados e futuros), contas e status.
+
+### Área Funcional: Lançamentos Recorrentes
+
+* **Automação de Fixos:** Geração automática de despesas e receitas fixas pré-cadastradas pelo usuário ao virar o mês.
+
+### Área Funcional: Gestão de Contas e Carteiras
+
+* **Múltiplas Carteiras:** Cadastro de contas (ex: Conta Corrente, Dinheiro, Cartão) com definição de saldo inicial.
+* **Arquivamento:** Opção de inativar (arquivar) contas que não são mais utilizadas, preservando o histórico.
+
+### Área Funcional: Gestão de Categorias e Orçamento
+
+* **Personalização:** Lista padrão inicial combinada com a liberdade de criar, editar, excluir ou arquivar categorias personalizadas.
+* **Reatribuição de Histórico:** Ao tentar excluir uma categoria com lançamentos vinculados, o sistema bloqueia a exclusão e sugere o arquivamento ou a realocação em lote dos itens para outra categoria.
+* **Limites de Gastos (Tetos):** Definição opcional de um limite de orçamento mensal por categoria, emitindo alerta visual caso o teto seja ultrapassado.
+
+### Área Funcional: Configurações Visuais
+
+* **Responsividade e Tema:** Interface totalmente adaptada para celulares e computadores, com botão de alternância manual entre tema claro e escuro.
+
+---
+
+## 6. Funcionalidades Fora de Escopo
+
+* **Anexo de arquivos:** Envio de fotos de recibos, comprovantes ou notas fiscais em PDF (adiado para versões futuras).
+* **Importação automática de extratos:** Conexão com bancos via arquivos OFX ou Open Finance.
+* **Gestão de investimentos:** Acompanhamento de ativos de renda fixa, ações ou criptomoedas.
+* **Divisão de contas em grupo:** Recurso para rachar despesas de viagens ou contas compartilhadas.
+* **Exportação de dados:** Baixar relatórios em planilhas CSV/Excel ou arquivos PDF.
+* **Múltiplas moedas:** Suporte a moedas internacionais (o sistema operará exclusivamente em Real brasileiro - R$).
+
+---
+
+## 7. Regras de Negócio
+
+* **Isolamento de Transferências:** Transferências entre contas próprias alteram estritamente o saldo individual das carteiras envolvidas, sem impactar o somatório geral de receitas e despesas do período.
+* **Integridade de Dados e Exclusão:** O sistema bloqueia a exclusão definitiva de contas ou categorias que possuem histórico de lançamentos vinculados, exigindo o arquivamento ou a realocação dos registros.
+* **Geração de Recorrentes:** Despesas e receitas fixas configuradas pelo usuário são geradas de forma automática pelo sistema no início de cada novo ciclo mensal.
+* **Monitoramento de Orçamento:** O sistema compara o total gasto em uma categoria com o teto de orçamento definido e exibe um alerta visual se o limite for ultrapassado.
+* **Destaque de Atrasos:** Lançamentos com status pendente cuja data de vencimento já passou recebem destaque visual automático no painel.
+* **Moeda Padrão:** Todos os valores monetários devem seguir obrigatoriamente a formatação padrão do Real brasileiro (R$).
+
+---
+
+## 8. Informações que o Sistema Precisa Controlar
+
+| Informação | Para que serve no sistema | Observações importantes |
+| --- | --- | --- |
+| **Usuários** | Identificar o usuário no login e vincular os dados financeiros ao seu painel exclusivo. | Pode utilizar credenciais tradicionais (e-mail/senha) ou identificador da conta Google. |
+| **Contas / Carteiras** | Controlar onde o dinheiro está armazenado (ex: Conta Corrente, Dinheiro, Cartão). | Armazena nome, saldo inicial e status (ativo ou arquivado). |
+| **Categorias** | Classificar a natureza dos gastos e ganhos. | Armazena nome, tipo (receita/despesa), teto de orçamento mensal opcional e status (ativo/arquivado). |
+| **Lançamentos** | Registrar todas as movimentações financeiras do usuário. | Armazena tipo, valor, data, descrição, categoria, conta de origem/destino, forma de pagamento, status (pago/pendente) e observações. |
+
+---
+
+## 9. Fluxos Principais de Uso
+
+### Registrar Nova Movimentação (Receita ou Despesa)
+
+1. O usuário acessa a área de lançamentos ou o painel principal.
+2. O usuário clica em adicionar novo lançamento.
+3. O sistema exibe o formulário de cadastro.
+4. O usuário preenche os campos obrigatórios (tipo, valor, data, descrição, categoria, conta e status) e o campo opcional de observação.
+5. O usuário confirma a ação.
+6. O sistema valida o preenchimento dos campos obrigatórios.
+7. O sistema registra a movimentação e atualiza o saldo da conta e os indicadores do painel.
+8. O sistema exibe a movimentação atualizada na listagem.
+
+### Realizar Transferência entre Contas
+
+1. O usuário acessa a opção de transferências.
+2. O usuário informa o valor, a data, a conta de origem e a conta de destino.
+3. O usuário confirma a transferência.
+4. O sistema valida se há saldo ou se a operação é permitida.
+5. O sistema desconta o valor da conta de origem e adiciona na conta de destino, sem alterar o total de receitas e despesas do mês.
+6. O sistema exibe o sucesso da operação e os novos saldos das contas.
+
+### Navegar por Períodos (Meses)
+
+1. O usuário visualiza o seletor de mês e ano na tela principal.
+2. O usuário seleciona um mês passado ou futuro.
+3. O sistema atualiza instantaneamente o painel e a lista de lançamentos exibindo os dados referentes ao período escolhido.
+
+---
+
+## 10. Histórias de Usuário
+
+* Como usuário pessoal, eu quero fazer login com minha conta Google ou e-mail para acessar meu painel financeiro de forma segura.
+* Como usuário pessoal, eu quero cadastrar receitas e despesas informando valor, categoria e forma de pagamento para saber exatamente para onde vai o meu dinheiro.
+* Como usuário pessoal, eu quero que minhas despesas e receitas fixas sejam geradas automaticamente todo mês para evitar o trabalho de redigitação manual.
+* Como usuário pessoal, eu quero definir um teto de gastos por categoria para receber alertas visuais caso ultrapasse o orçamento planejado.
+* Como usuário pessoal, eu quero navegar livremente entre meses passados e futuros para consultar o histórico do meu orçamento.
+* Como usuário pessoal, eu quero alternar entre o tema claro e o tema escuro para melhorar o meu conforto visual durante o uso.
+
+---
+
+## 11. Critérios de Aceitação
+
+* [ ] O usuário consegue realizar o cadastro e o login utilizando e-mail/senha ou a conta Google.
+* [ ] O sistema impede o salvamento de lançamentos e cadastros quando campos obrigatórios não são preenchidos.
+* [ ] O sistema exibe mensagens claras quando dados precisam ser corrigidos nos formulários.
+* [ ] O sistema mostra o registro criado ou atualizado imediatamente nas consultas e no painel correspondente.
+* [ ] O sistema respeita o isolamento de dados garantindo acesso apenas ao painel do próprio usuário.
+* [ ] O sistema altera o saldo das contas corretamente ao registrar movimentações e transferências internas.
+* [ ] O sistema exibe alertas visuais automáticos para contas vencidas ou próximas do vencimento e para categorias que ultrapassaram o teto de orçamento.
+
+---
+
+## 12. Consultas, Relatórios e Indicadores
+
+* **Painel Resumo (Dashboard):** Exibe o saldo líquido do mês, total de receitas e total de despesas calculados em tempo real.
+* **Gráfico de Categorias:** Apresenta um gráfico de barras simples e monocromático com a distribuição das despesas por categoria no mês selecionado.
+* **Alerta de Vencimentos:** Lista resumida de contas pendentes com prazos próximos ou expirados.
+* **Listagem de Movimentações:** Tabela detalhada de lançamentos com suporte a barra de pesquisa textual e filtros por período (mês/ano), conta específica e status de pagamento.
+
+---
+
+## 13. Permissões e Segurança Funcional
+
+| Perfil | Pode fazer | Não pode fazer | Observações |
+| --- | --- | --- | --- |
+| **Usuário Pessoal** | Cadastrar, visualizar, editar e excluir seus próprios lançamentos, contas, categorias e definir orçamentos. Acessar painel e filtros. | Acessar dados de outros usuários ou gerenciar configurações globais de sistema. | Cada painel é restrito e isolado para o seu respectivo usuário. |
+
+---
+
+## 14. Limitações da Primeira Versão
+
+* Não haverá suporte para anexo de arquivos, fotos de recibos ou notas fiscais.
+* Não haverá importação automática de extratos bancários (OFX ou Open Finance).
+* Não haverá exportação de relatórios para arquivos externos (Excel, CSV ou PDF).
+* Não haverá suporte a múltiplas moedas (apenas Real brasileiro - R$).
+* Não haverá controle de investimentos ou divisão de contas em grupo.
+* Não haverá perfis múltiplos ou contas compartilhadas no mesmo painel (uso estritamente individual).
+
+---
+
+## 15. Pontos Pendentes Antes do FSD
+
+Não foram identificadas dúvidas funcionais pendentes para a criação do FSD.
+
+---
+
+## 16. Resumo Final do PRD
+
+O projeto consiste na criação do **FinançasSimples**, um sistema web responsivo de gestão financeira pessoal voltado para usuários únicos que buscam praticidade e clareza no dia a dia. A primeira versão entregará painel resumo com indicadores, gráfico de despesas por categoria, alerta de vencimentos, gestão completa de lançamentos avulsos e recorrentes automáticos, controle de múltiplas contas, transferências internas, categorias personalizáveis com tetos de orçamento e opções flexíveis de login (e-mail/senha e Google), além de alternância entre temas claro e escuro. Recursos avançados como anexos, importação bancária e exportação de relatórios ficam formalmente fora do escopo inicial. O projeto encontra-se totalmente alinhado e pronto para avançar para a etapa de criação do FSD (Documento de Especificação Funcional).
