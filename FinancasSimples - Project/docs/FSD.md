@@ -46,8 +46,8 @@ Para a construção e implementação do sistema, a IA codificadora deverá util
     * Envio de E-mails / Notificação: `Flask-Mail` ou módulo nativo `smtplib` para despacho seguro de mensagens de recuperação de senha;
     * Migrations: Mecanismo versionado com suporte a scripts SQL controlados / Alembic (Flask-Migrate).
   * Frontend:
-    * React (renderização de componentes reativos, gestão de estado local e formulários);
-    * Biblioteca de ícones leves via SVG (ex: Lucide / Feather icons integrados localmente).
+    * React e ReactDOM (renderização de componentes reativos, gestão de estado local e formulários), integrados via scripts empacotados localmente em `app/static/js/vendor/` (ou módulos ESM nativos), dispensando a necessidade de runtime ou build via Node.js/npm no ambiente de desenvolvimento e produção (PythonAnywhere);
+    * Biblioteca de ícones leves via SVG empacotados localmente em `app/static/` (alinhados ao protótipo visual da interface), sem chamadas externas a CDNs.
 * **Padrão arquitetural:** MVC (Model-View-Controller) adaptado para Python/Flask e React.
 * **Restrições técnicas:**
   * Moeda padrão e exclusiva: Real brasileiro (R$). Não há suporte a moedas estrangeiras.
@@ -285,9 +285,9 @@ A proteção deve seguir duas camadas fundamentais:
 * **Objetivo:** Garantir conforto visual e personalização básica.
 * **Usuários envolvidos:** Usuário Pessoal autenticado.
 * **Ações permitidas:**
-  * Alternar manualmente entre tema escuro (*High-Contrast Dark* - padrão oficial) e tema claro através de botão seletor acessível no cabeçalho ou menu.
+  * Alternar manualmente entre tema escuro (*High-Contrast Dark* - padrão oficial) e tema claro através de botão seletor acessível no cabeçalho ou menu, alternando dinamicamente o logotipo exibido (`logo_tema_escuro.png` para tema escuro e `logo_tema_claro.png` para tema claro).
   * Visualizar dados do perfil (nome e e-mail).
-* **Resultado esperado:** Interface atualizada instantaneamente com a preferência de tema persistida localmente (ou no perfil) para os próximos acessos.
+* **Resultado esperado:** Interface e logotipo atualizados instantaneamente com a preferência de tema persistida localmente (ou no perfil) para os próximos acessos.
 
 ---
 
@@ -817,10 +817,10 @@ A interface do usuário adota estritamente as diretrizes do documento de design 
 * **Perfil:** Usuário Pessoal autenticado.
 * **Passo a passo:**
   1. O usuário clica no botão seletor de tema no cabeçalho ou nas configurações.
-  2. O frontend alterna dinamicamente a classe CSS raiz da aplicação (adicionando ou removendo o modificador do tema claro sobre a base zinc).
+  2. O frontend alterna dinamicamente a classe CSS raiz da aplicação (adicionando ou removendo o modificador do tema claro sobre a base zinc) e altera a imagem do logotipo exibido (`logo_tema_escuro.png` para tema escuro e `logo_tema_claro.png` para tema claro).
   3. O frontend grava a preferência imediatamente no armazenamento local (`localStorage`) e envia requisição assíncrona `PATCH /api/usuario/tema` com o novo valor (`dark` ou `light`).
   4. O backend persiste a preferência na coluna `tema_preferido` da tabela `usuarios`.
-  5. Em acessos futuros em qualquer dispositivo, o sistema inicializa com o tema salvo no perfil.
+  5. Em acessos futuros em qualquer dispositivo, o sistema inicializa com o tema e a logotipo correspondente salvos no perfil.
 
 ---
 
