@@ -69,14 +69,14 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Construir as classes de modelo SQLAlchemy que representam as tabelas do banco de dados, encapsulam regras de persistência por usuário e implementar o sistema de logging com contingência automática em arquivo.
 * **Checklist de tarefas:**
-  - [ ] Configurar extensão Flask-SQLAlchemy na Application Factory (`app/__init__.py`);
-  - [ ] Implementar `app/models/usuario.py` (métodos de senha, propriedades de autenticação);
-  - [ ] Implementar `app/models/conta.py` (métodos de consulta de saldo e filtros de status ativo/arquivado);
-  - [ ] Implementar `app/models/categoria.py` (validações de unicidade por tipo e regras de teto);
-  - [ ] Implementar `app/models/lancamento.py` (regras de datas, tipos de movimentação e filtro padrão `deleted_at IS NULL`);
-  - [ ] Implementar `app/models/lancamento_recorrente.py` (campos de ciclo mensal e flag ativo);
-  - [ ] Implementar `app/models/log_erro.py` e `app/models/log_seguranca.py`;
-  - [ ] Configurar mecanismo global de tratamento de exceções no Flask com fallback para `logs/error.log` em caso de falha de banco.
+  - [x] Configurar extensão Flask-SQLAlchemy na Application Factory (`app/__init__.py`);
+  - [x] Implementar `app/models/usuario.py` (métodos de senha, propriedades de autenticação);
+  - [x] Implementar `app/models/conta.py` (métodos de consulta de saldo e filtros de status ativo/arquivado);
+  - [x] Implementar `app/models/categoria.py` (validações de unicidade por tipo e regras de teto);
+  - [x] Implementar `app/models/lancamento.py` (regras de datas, tipos de movimentação e filtro padrão `deleted_at IS NULL`);
+  - [x] Implementar `app/models/lancamento_recorrente.py` (campos de ciclo mensal e flag ativo);
+  - [x] Implementar `app/models/log_erro.py` e `app/models/log_seguranca.py`;
+  - [x] Configurar mecanismo global de tratamento de exceções no Flask com fallback para `logs/error.log` em caso de falha de banco.
 * **Critérios de pronto:** Modelos devidamente mapeados com relacionamentos bidirecionais e tratamento de erros com contingência em arquivo validado.
 * **Arquivos e pastas alterados:** `app/models/`, `app/__init__.py`.
 * **Dependências:** Fase 2 concluída.

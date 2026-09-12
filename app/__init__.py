@@ -1,13 +1,20 @@
+"""Application Factory do FinançasSimples (docs/FSD.md - Seções 3, 5 e 19).
+
+Inicializa a aplicação Flask, extensões (SQLAlchemy), configuração de logging
+resiliente e manipuladores globais de erro com contingência.
+"""
 import os
 import logging
+import traceback
 from logging.handlers import RotatingFileHandler
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from config.config import Config
+from app.models import db
 
 
 def create_app(config_class=Config):
-    """Application Factory do FinançasSimples (docs/FSD.md - Seções 3 e 5)."""
-    
+    """Application Factory principal."""
+
     # Caminhos base da aplicação
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     template_dir = os.path.join(base_dir, "app", "templates")
@@ -19,20 +26,34 @@ def create_app(config_class=Config):
         static_folder=static_dir,
         static_url_path="/static",
     )
-    
+
     app.config.from_object(config_class)
 
-    # Configuração de Log de Contingência em Arquivo
+    # 1. Configuração do Mecanismo de Contingência de Logs em Arquivo
     configurar_logs(app)
 
-    # Rota básica de verificação de saúde da infraestrutura (Fase 1)
+    # 2. Inicialização da Extensão SQLAlchemy (Fase 3)
+    db.init_app(app)
+
+    # 3. Registro dos Manipuladores Globais de Erro
+    registrar_error_handlers(app)
+
+    # Rota básica de verificação de saúde da aplicação
     @app.route("/api/health", methods=["GET"])
     def health_check():
+        db_status = "desconectado"
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            db_status = "operacional"
+        except Exception as e:
+            db_status = f"falha: {str(e)}"
+
         return jsonify({
-            "status": "ok",
+            "sucesso": True,
             "sistema": "FinançasSimples",
-            "fase": "Fase 1 - Infraestrutura e Base do Projeto Concluída",
-            "mensagem": "Servidor Flask operacional e pronto para as próximas fases."
+            "fase": "Fase 3 - Camada de Modelos (ORM) e Logs Estruturados",
+            "banco_de_dados": db_status,
+            "status": "ok",
         }), 200
 
     return app
@@ -54,3 +75,69 @@ def configurar_logs(app):
         file_handler.setLevel(logging.INFO if not app.debug else logging.DEBUG)
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO if not app.debug else logging.DEBUG)
+
+
+def registrar_error_handlers(app):
+    """Registra capturadores centralizados de erro HTTP e exceções não tratadas (docs/FSD.md - Seção 19.1)."""
+    from app.services.logger_service import registrar_erro
+
+    @app.errorhandler(400)
+    def bad_request_error(e):
+        return jsonify({
+            "sucesso": False,
+            "erro": "Requisição inválida ou parâmetros ausentes.",
+        }), 400
+
+    @app.errorhandler(403)
+    def forbidden_error(e):
+        return jsonify({
+            "sucesso": False,
+            "erro": "Acesso negado. Você não tem permissão para acessar este recurso.",
+        }), 403
+
+    @app.errorhandler(404)
+    def not_found_error(e):
+        return jsonify({
+            "sucesso": False,
+            "erro": "Recurso não encontrado.",
+        }), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        tb = traceback.format_exc()
+        rota = f"{request.method} {request.path}" if request else None
+        ip = request.remote_addr if request else None
+        
+        # Gravação resiliente (MySQL com fallback para logs/error.log)
+        registrar_erro(
+            nivel="ERROR",
+            mensagem=str(e),
+            rota=rota,
+            stack_trace=tb,
+            ip=ip,
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "erro": "Ocorreu um erro interno ao processar sua solicitação. A equipe técnica já foi notificada. Por favor, tente novamente em instantes.",
+        }), 500
+
+    @app.errorhandler(Exception)
+    def unhandled_exception_error(e):
+        # Captura qualquer exceção geral não mapeada
+        tb = traceback.format_exc()
+        rota = f"{request.method} {request.path}" if request else None
+        ip = request.remote_addr if request else None
+
+        registrar_erro(
+            nivel="CRITICAL",
+            mensagem=str(e),
+            rota=rota,
+            stack_trace=tb,
+            ip=ip,
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "erro": "Ocorreu um erro interno ao processar sua solicitação. A equipe técnica já foi notificada. Por favor, tente novamente em instantes.",
+        }), 500

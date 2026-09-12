@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-09-12 (Conclusão da Fase 2 — Banco de Dados, Schema e Migrations Versionadas)
-* **Fase atual:** Fase 2 concluída — Banco de Dados, Schema e Migrations Versionadas
-* **Próximo passo recomendado:** Iniciar a Fase 3 (Camada de Modelos (ORM) e Mecanismo de Logs Estruturados)
+* **Última atualização:** 2026-09-12 (Conclusão da Fase 3 — Camada de Modelos (ORM) e Mecanismo de Logs Estruturados)
+* **Fase atual:** Fase 3 concluída — Camada de Modelos (ORM) e Mecanismo de Logs Estruturados
+* **Próximo passo recomendado:** Iniciar a Fase 4 (Autenticação, Sessão, Google OAuth e Proteção de Rotas)
 
 ---
 
@@ -12,7 +12,7 @@
 | :---: | :--- | :---: |
 | **Fase 1** | Infraestrutura e Base do Projeto | **Concluída** |
 | **Fase 2** | Banco de Dados, Schema e Migrations Versionadas | **Concluída** |
-| **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | Pendente |
+| **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | **Concluída** |
 | **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | Pendente |
 | **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | Pendente |
 | **Fase 6** | Módulo de Contas e Carteiras | Pendente |
@@ -52,9 +52,10 @@
 ---
 
 ### Fase 3 — Camada de Modelos (ORM) e Mecanismo de Logs Estruturados
-- [ ] Configurar extensão Flask-SQLAlchemy na App Factory;
-- [ ] Implementar models em `app/models/` (`usuario.py`, `conta.py`, `categoria.py`, `lancamento.py`, `lancamento_recorrente.py`, `log_erro.py`, `log_seguranca.py`);
-- [ ] Implementar capturador global de erros com gravação em `logs_erros` e contingência em `logs/error.log`.
+- [x] Configurar extensão Flask-SQLAlchemy na App Factory (`app/__init__.py`);
+- [x] Implementar models em `app/models/` (`usuario.py`, `conta.py`, `categoria.py`, `lancamento.py`, `lancamento_recorrente.py`, `log_erro.py`, `log_seguranca.py`);
+- [x] Implementar capturador global de erros com gravação primária em `logs_erros` e contingência automática em `logs/error.log`;
+- [x] Criar suíte de testes automatizados com 100% de aprovação (`tests/test_fase3_models_logs.py`).
 
 ---
 
