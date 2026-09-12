@@ -23,3 +23,6 @@ logs/*.log
 # Arquivos de sistema
 .DS_Store
 Thumbs.db
+
+# Configurações com credenciais locais/produção
+config/config.py
