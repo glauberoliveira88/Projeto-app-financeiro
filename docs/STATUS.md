@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-09-12 (Preparação do terreno e conclusão da Fase 1)
-* **Fase atual:** Fase 1 concluída — Infraestrutura e Base do Projeto
-* **Próximo passo recomendado:** Iniciar a Fase 2 (Banco de Dados, Schema e Migrations Versionadas)
+* **Última atualização:** 2026-09-12 (Conclusão da Fase 2 — Banco de Dados, Schema e Migrations Versionadas)
+* **Fase atual:** Fase 2 concluída — Banco de Dados, Schema e Migrations Versionadas
+* **Próximo passo recomendado:** Iniciar a Fase 3 (Camada de Modelos (ORM) e Mecanismo de Logs Estruturados)
 
 ---
 
@@ -11,7 +11,7 @@
 | Fase | Descrição | Status |
 | :---: | :--- | :---: |
 | **Fase 1** | Infraestrutura e Base do Projeto | **Concluída** |
-| **Fase 2** | Banco de Dados, Schema e Migrations Versionadas | Pendente |
+| **Fase 2** | Banco de Dados, Schema e Migrations Versionadas | **Concluída** |
 | **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | Pendente |
 | **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | Pendente |
 | **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | Pendente |
@@ -44,10 +44,10 @@
 ---
 
 ### Fase 2 — Banco de Dados, Schema e Migrations Versionadas
-- [ ] Implementar conexão robusta com MySQL em `database/migrate.py` usando credenciais de `config/config.py`;
-- [ ] Criar migration `001_create_initial_tables.sql` com as 8 tabelas do FSD (`usuarios`, `contas`, `categorias`, `lancamentos_recorrentes`, `lancamentos`, `logs_erros`, `logs_seguranca`, `migrations_controle`);
-- [ ] Criar migration `002_create_indexes.sql` com todos os índices de desempenho previstos no FSD;
-- [ ] Validar execução idempotente de migração via CLI local (`python database/migrate.py`).
+- [x] Implementar conexão robusta com MySQL em `database/migrate.py` usando credenciais de `config/config.py`;
+- [x] Criar migration `001_create_initial_tables.sql` com as 8 tabelas do FSD (`usuarios`, `contas`, `categorias`, `lancamentos_recorrentes`, `lancamentos`, `logs_erros`, `logs_seguranca`, `migrations_controle`);
+- [x] Criar migration `002_create_indexes.sql` com todos os índices de desempenho previstos no FSD;
+- [x] Validar execução idempotente de migração via CLI local (`python database/migrate.py`).
 
 ---
 

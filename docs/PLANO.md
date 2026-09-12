@@ -47,8 +47,8 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Implementar o mecanismo de migrações versionadas via CLI (`database/migrate.py`) e criar o schema relacional inicial no MySQL com todas as tabelas, foreign keys, constraints únicas e índices de otimização descritos no FSD.
 * **Checklist de tarefas:**
-  - [ ] Implementar conexão robusta com MySQL em `database/migrate.py` utilizando credenciais de `config/config.py`;
-  - [ ] Criar migration `001_create_initial_tables.sql` com as tabelas:
+  - [x] Implementar conexão robusta com MySQL em `database/migrate.py` utilizando credenciais de `config/config.py`;
+  - [x] Criar migration `001_create_initial_tables.sql` com as tabelas:
     - `usuarios` (com constraints `uk_usuarios_email` e `uk_usuarios_google_id`);
     - `contas` (com constraint `uk_contas_usuario_nome` e FK para `usuarios`);
     - `categorias` (com constraint `uk_categorias_usuario_nome_tipo` e FK para `usuarios`);
@@ -57,8 +57,8 @@ Este documento define as fases incrementais para a construção completa do sist
     - `logs_erros` (com FK opcional para `usuarios`);
     - `logs_seguranca` (com FK opcional para `usuarios`);
     - `migrations_controle` (para controle de histórico de migrações aplicadas);
-  - [ ] Criar migration `002_create_indexes.sql` com todos os 8 índices de desempenho definidos na Seção 11.2 do FSD;
-  - [ ] Testar a execução idempotente de `python database/migrate.py` no terminal.
+  - [x] Criar migration `002_create_indexes.sql` com todos os 8 índices de desempenho definidos na Seção 11.2 do FSD;
+  - [x] Testar a execução idempotente de `python database/migrate.py` no terminal.
 * **Critérios de pronto:** Script de migração executa com sucesso no MySQL, cria todas as tabelas e índices previstos, registra a execução em `migrations_controle` e não duplica execuções subsequentes.
 * **Arquivos e pastas alterados:** `database/migrate.py`, `database/migrations/`.
 * **Dependências:** Fase 1 concluída e serviço MySQL em execução.

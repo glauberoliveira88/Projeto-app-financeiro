@@ -19,6 +19,23 @@ from config.config import Config
 MIGRATIONS_DIR = os.path.join(BASE_DIR, "database", "migrations")
 
 
+def extrair_comandos_sql(conteudo_sql: str) -> list[str]:
+    """Divide o arquivo SQL em comandos válidos, ignorando blocos vazios e comentários isolados."""
+    comandos = []
+    partes = conteudo_sql.split(";")
+    for parte in partes:
+        linhas_uteis = []
+        for linha in parte.splitlines():
+            linha_limpa = linha.strip()
+            if not linha_limpa or linha_limpa.startswith("--") or linha_limpa.startswith("#"):
+                continue
+            linhas_uteis.append(linha)
+        comando_limpo = "\n".join(linhas_uteis).strip()
+        if comando_limpo:
+            comandos.append(comando_limpo)
+    return comandos
+
+
 def executar_migrations():
     """Lê e executa as migrações pendentes no MySQL."""
     print("=" * 60)
@@ -51,80 +68,86 @@ def executar_migrations():
         print("Certifique-se de que o serviço MySQL (ex: XAMPP) esteja ativo.")
         sys.exit(1)
 
-    with conn.cursor() as cursor:
-        cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{Config.DB_NAME}` "
-            f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        )
-        cursor.execute(f"USE `{Config.DB_NAME}`;")
-        
-        # Garantir tabela de controle de migrations
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS `migrations_controle` (
-                `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
-                `migration_name` VARCHAR(191) NOT NULL,
-                `executado_em` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `uk_migration_name` (`migration_name`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        """)
-        conn.commit()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS `{Config.DB_NAME}` "
+                f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            )
+            cursor.execute(f"USE `{Config.DB_NAME}`;")
 
-        # Obter migrations já executadas
-        cursor.execute("SELECT migration_name FROM `migrations_controle`;")
-        executadas = {row[0] for row in cursor.fetchall()}
-
-    # Listar arquivos de migração ordenados
-    if not os.path.exists(MIGRATIONS_DIR):
-        os.makedirs(MIGRATIONS_DIR, exist_ok=True)
-
-    arquivos = sorted([f for f in os.listdir(MIGRATIONS_DIR) if f.endswith(".sql")])
-
-    if not arquivos:
-        print("[INFO] Nenhum arquivo .sql encontrado em database/migrations/.")
-        print("[STATUS] Estrutura do executor pronta para receber as migrations da Fase 2.")
-        conn.close()
-        return
-
-    pendentes = [f for f in arquivos if f not in executadas]
-
-    if not pendentes:
-        print(f"[OK] Banco de dados atualizado! Todas as {len(arquivos)} migrations já foram aplicadas.")
-        conn.close()
-        return
-
-    print(f"Total de migrations pendentes: {len(pendentes)}")
-
-    for arquivo in pendentes:
-        caminho = os.path.join(MIGRATIONS_DIR, arquivo)
-        print(f"-> Aplicando: {arquivo}...")
-        with open(caminho, "r", encoding="utf-8") as f:
-            conteudo_sql = f.read()
-
-        try:
-            with conn.cursor() as cursor:
-                # Executar comandos do arquivo SQL
-                for comando in conteudo_sql.split(";"):
-                    sql = comando.strip()
-                    if sql:
-                        cursor.execute(sql)
-                
-                # Registrar migração aplicada
-                cursor.execute(
-                    "INSERT INTO `migrations_controle` (`migration_name`) VALUES (%s);",
-                    (arquivo,),
-                )
+            # Garantir tabela de controle de migrations
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS `migrations_controle` (
+                    `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
+                    `migration_name` VARCHAR(191) NOT NULL,
+                    `executado_em` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    CONSTRAINT `uk_migration_name` UNIQUE (`migration_name`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
             conn.commit()
-            print(f"   [SUCESSO] {arquivo} aplicada com sucesso.")
-        except Exception as err:
-            conn.rollback()
-            print(f"   [FALHA] Erro ao aplicar {arquivo}: {err}")
-            conn.close()
-            sys.exit(1)
 
-    conn.close()
-    print("-" * 60)
-    print("[CONCLUÍDO] Todas as migrações pendentes foram aplicadas com sucesso.")
+            # Obter migrations já executadas
+            cursor.execute("SELECT migration_name FROM `migrations_controle`;")
+            executadas = {row[0] for row in cursor.fetchall()}
+
+        # Listar arquivos de migração ordenados
+        if not os.path.exists(MIGRATIONS_DIR):
+            os.makedirs(MIGRATIONS_DIR, exist_ok=True)
+
+        arquivos = sorted([f for f in os.listdir(MIGRATIONS_DIR) if f.endswith(".sql")])
+
+        if not arquivos:
+            print("[INFO] Nenhum arquivo .sql encontrado em database/migrations/.")
+            conn.close()
+            return
+
+        pendentes = [f for f in arquivos if f not in executadas]
+
+        if not pendentes:
+            print(f"[OK] Banco de dados atualizado! Todas as {len(arquivos)} migrations já foram aplicadas.")
+            conn.close()
+            return
+
+        print(f"Total de migrations pendentes: {len(pendentes)}")
+
+        for arquivo in pendentes:
+            caminho = os.path.join(MIGRATIONS_DIR, arquivo)
+            print(f"-> Aplicando: {arquivo}...")
+            with open(caminho, "r", encoding="utf-8") as f:
+                conteudo_sql = f.read()
+
+            comandos = extrair_comandos_sql(conteudo_sql)
+
+            try:
+                with conn.cursor() as cursor:
+                    # Executar comandos individuais do arquivo SQL
+                    for sql in comandos:
+                        cursor.execute(sql)
+
+                    # Registrar migração aplicada
+                    cursor.execute(
+                        "INSERT INTO `migrations_controle` (`migration_name`) VALUES (%s);",
+                        (arquivo,),
+                    )
+                conn.commit()
+                print(f"   [SUCESSO] {arquivo} aplicada com sucesso ({len(comandos)} comandos executados).")
+            except Exception as err:
+                conn.rollback()
+                print(f"   [FALHA] Erro ao aplicar {arquivo}: {err}")
+                conn.close()
+                sys.exit(1)
+
+        conn.close()
+        print("-" * 60)
+        print("[CONCLUÍDO] Todas as migrações pendentes foram aplicadas com sucesso.")
+
+    except Exception as e:
+        print(f"[ERRO GERAL] Falha durante o processamento das migrations: {e}")
+        if conn:
+            conn.close()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
