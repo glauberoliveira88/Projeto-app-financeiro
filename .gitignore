@@ -1,0 +1,25 @@
+# Ambientes virtuais Python
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / otimizações Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Logs
+logs/*.log
+!logs/.gitkeep
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+# Proteção de Diretórios e Arquivos Sensíveis — Servidores Apache
+# Diretivas de Segurança do FinançasSimples (docs/FSD.md - Seções 5 e 24)
+
+# Desativar listagem pública de arquivos
+Options -Indexes
+
+# Bloquear acesso direto a arquivos de código Python, scripts SQL, logs e configurações
+<FilesMatch "\.(py|sql|log|conf|ini|sh|bak|dist)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Bloquear acesso direto a pastas internas sensíveis
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(app/models|app/controllers|app/templates|config|database|logs)/ - [F,L]
+</IfModule>
