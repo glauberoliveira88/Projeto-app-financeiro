@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-09-19 (Conclusão da Fase 4 — Autenticação, Sessão, Google OAuth e Proteção de Rotas)
-* **Fase atual:** Fase 4 concluída — Autenticação, Sessão, Google OAuth e Proteção de Rotas
-* **Próximo passo recomendado:** Iniciar a Fase 5 (Shell Base da Interface: Design Obsidian, CSS, Meta CSRF e Casca React)
+* **Última atualização:** 2026-09-19 (Conclusão da Fase 5 — Shell Base da Interface: Design Obsidian, CSS, Meta CSRF e Casca React)
+* **Fase atual:** Fase 5 concluída — Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React)
+* **Próximo passo recomendado:** Iniciar a Fase 6 (Módulo de Contas e Carteiras)
 
 ---
 
@@ -14,7 +14,7 @@
 | **Fase 2** | Banco de Dados, Schema e Migrations Versionadas | **Concluída** |
 | **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | **Concluída** |
 | **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | **Concluída** |
-| **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | Pendente |
+| **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | **Concluída** |
 | **Fase 6** | Módulo de Contas e Carteiras | Pendente |
 | **Fase 7** | Módulo de Categorias e Orçamentos (Provisionamento Canônico e Reatribuição) | Pendente |
 | **Fase 8** | Módulo de Lançamentos (Receitas, Despesas, Transferências e Soft Delete) | Pendente |
@@ -22,6 +22,7 @@
 | **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | Pendente |
 | **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | Pendente |
 | **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | Pendente |
+
 
 ---
 
@@ -69,11 +70,13 @@
 ---
 
 ### Fase 5 — Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React)
-- [ ] Criar `app/templates/index.html` com injeção do token CSRF e montagem do React;
-- [ ] Implementar `app/static/css/style.css` com paleta zinc, violeta suave (`#a78bfa`), verde esmeralda (`#34d399`), vermelho (`#ef4444`) e tipografia Geist;
-- [ ] Disponibilizar scripts do React e ReactDOM em `app/static/js/vendor/`;
-- [ ] Criar cliente HTTP padronizado enviando cabeçalho `X-CSRFToken` nas mutações de estado;
-- [ ] Renderizar telas de Login, Cadastro e Recuperação de Senha.
+- [x] Criar `app/templates/index.html` com injeção do token CSRF (`<meta name="csrf-token" content="{{ csrf_token() }}">`) e montagem do React (`div#root`);
+- [x] Implementar `app/static/css/style.css` fiel ao `docs/DESIGN.md`: paleta zinc profunda (`#09090b`, `#0c0c0f`, `#18181b`, `#27272a`), acentos em violeta suave (`#a78bfa`), verde esmeralda (`#34d399`), vermelho de erro (`#ef4444`), tipografia Geist e estilos completos para tema claro invertido;
+- [x] Disponibilizar scripts locais de React, ReactDOM e Babel Standalone em `app/static/js/vendor/` sem necessidade de runtime ou build via Node.js/npm;
+- [x] Implementar cliente HTTP padronizado (`app/static/js/api.js`) com leitura da meta tag e envio transparente do cabeçalho `X-CSRFToken` em requisições de mutação (`POST`, `PUT`, `PATCH`, `DELETE`);
+- [x] Construir a aplicação React inicial (`app/static/js/app.js`) com componentes completos de Login, Cadastro, Recuperação de Senha, Redefinição de Senha, Shell Autenticado inicial e alternador de tema com sincronização dinâmica das logotipos (`logo_tema_escuro.png` e `logo_tema_claro.png`);
+- [x] Criar suíte de testes automatizados com 100% de aprovação (`tests/test_fase5_interface.py`).
+
 
 ---
 

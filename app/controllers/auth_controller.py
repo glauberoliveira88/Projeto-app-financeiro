@@ -45,15 +45,7 @@ def login_view():
     """Exibe a tela de login ou redireciona para o dashboard caso já autenticado."""
     if current_user.is_authenticated:
         return redirect(url_for("auth.dashboard_view"))
-    try:
-        return render_template("index.html")
-    except Exception:
-        # Fallback de inicialização caso index.html ainda não esteja renderizado na Fase 4
-        return jsonify({
-            "sucesso": True,
-            "pagina": "login",
-            "mensagem": "Tela de Login do FinançasSimples.",
-        }), 200
+    return render_template("index.html")
 
 
 @auth_bp.route("/cadastro", methods=["GET"])
@@ -61,57 +53,32 @@ def cadastro_view():
     """Exibe a tela de cadastro."""
     if current_user.is_authenticated:
         return redirect(url_for("auth.dashboard_view"))
-    try:
-        return render_template("index.html")
-    except Exception:
-        return jsonify({
-            "sucesso": True,
-            "pagina": "cadastro",
-            "mensagem": "Tela de Cadastro do FinançasSimples.",
-        }), 200
+    return render_template("index.html")
 
 
 @auth_bp.route("/recuperar-senha", methods=["GET"])
 def recuperar_senha_view():
     """Exibe a tela de solicitação de recuperação de senha."""
-    try:
-        return render_template("index.html")
-    except Exception:
-        return jsonify({
-            "sucesso": True,
-            "pagina": "recuperar-senha",
-            "mensagem": "Tela de Recuperação de Senha do FinançasSimples.",
-        }), 200
+    return render_template("index.html")
 
 
 @auth_bp.route("/redefinir-senha/<token>", methods=["GET"])
 def redefinir_senha_view(token):
     """Exibe a tela para digitação da nova senha mediante validação do token."""
-    usuario = Usuario.query.filter_by(token_recuperacao=token).first()
-    token_valido = usuario.validar_token_recuperacao(token) if usuario else False
     try:
-        return render_template("index.html", token=token, token_valido=token_valido)
+        usuario = Usuario.query.filter_by(token_recuperacao=token).first()
+        token_valido = usuario.validar_token_recuperacao(token) if usuario else False
     except Exception:
-        return jsonify({
-            "sucesso": True,
-            "pagina": "redefinir-senha",
-            "token": token,
-            "token_valido": token_valido,
-        }), 200
+        token_valido = False
+    return render_template("index.html", token=token, token_valido=token_valido)
 
 
 @auth_bp.route("/dashboard", methods=["GET"])
 @login_required
 def dashboard_view():
     """Ponto de entrada do painel principal autenticado."""
-    try:
-        return render_template("index.html")
-    except Exception:
-        return jsonify({
-            "sucesso": True,
-            "pagina": "dashboard",
-            "usuario": current_user.to_dict(),
-        }), 200
+    return render_template("index.html")
+
 
 
 # ==============================================================================
@@ -175,10 +142,9 @@ def api_cadastro():
         provisionar_dados_iniciais_usuario(novo_usuario)
         db.session.commit()
 
-        # 4. Inicializa sessão segura do usuário recém-criado
-        session.clear()
-        session["usuario_id"] = novo_usuario.id
-        session.permanent = True
+        # 4. Inicializa sessão segura do usuário recém-criado preservando CSRF
+        from app.utils.csrf import renovar_sessao_mantendo_csrf
+        csrf_token = renovar_sessao_mantendo_csrf(novo_usuario.id)
 
         registrar_seguranca(
             evento="CADASTRO_SUCESSO",
@@ -190,6 +156,8 @@ def api_cadastro():
         return jsonify({
             "sucesso": True,
             "mensagem": "Cadastro realizado com sucesso! Bem-vindo(a) ao FinançasSimples.",
+            "usuario": novo_usuario.to_dict(),
+            "csrf_token": csrf_token,
             "dados": {
                 "usuario": novo_usuario.to_dict(),
             },
@@ -254,10 +222,9 @@ def api_login():
             "erro": "E-mail ou senha incorretos.",
         }), 401
 
-    # 3. Credenciais válidas: inicialização de sessão segura
-    session.clear()
-    session["usuario_id"] = usuario.id
-    session.permanent = True
+    # 3. Credenciais válidas: inicialização de sessão segura preservando CSRF
+    from app.utils.csrf import renovar_sessao_mantendo_csrf
+    csrf_token = renovar_sessao_mantendo_csrf(usuario.id)
 
     registrar_seguranca(
         evento="LOGIN_SUCESSO",
@@ -269,6 +236,8 @@ def api_login():
     return jsonify({
         "sucesso": True,
         "mensagem": "Login efetuado com sucesso.",
+        "usuario": usuario.to_dict(),
+        "csrf_token": csrf_token,
         "dados": {
             "usuario": usuario.to_dict(),
         },
@@ -286,7 +255,10 @@ def api_logout():
             usuario_id=user_id,
             detalhes="Logout realizado pelo usuário.",
         )
+    csrf = session.get("_csrf_token")
     session.clear()
+    if csrf:
+        session["_csrf_token"] = csrf
 
     # Se a requisição veio via navegador comum (GET /api/auth/logout ou /logout)
     if request.method == "GET":
@@ -457,6 +429,8 @@ def api_google_login():
 
     # Verifica se as credenciais foram configuradas ou se permanecem de exemplo
     if not client_id or not client_secret or "seu-google-client-id" in client_id:
+        if "text/html" in request.headers.get("Accept", "") or not request.is_json:
+            return redirect(url_for("auth.login_view", aviso="google_nao_configurado"))
         return jsonify({
             "sucesso": False,
             "erro": "A integração com Google OAuth 2.0 requer credenciais válidas configuradas no config/config.py (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",

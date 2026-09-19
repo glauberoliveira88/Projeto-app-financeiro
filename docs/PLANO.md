@@ -108,18 +108,19 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Construir o template base da aplicação e a estrutura de estilos CSS de alto contraste baseada no `docs/DESIGN.md` (Obsidian), integrando a casca React e o cliente HTTP padronizado com token CSRF.
 * **Checklist de tarefas:**
-  - [ ] Criar template `app/templates/index.html` com injeção da meta tag `<meta name="csrf-token" content="{{ csrf_token() }}">`, links para fontes Geist e montagem da `div#root`;
-  - [ ] Implementar `app/static/css/style.css` com todas as diretrizes do `docs/DESIGN.md`:
+  - [x] Criar template `app/templates/index.html` com injeção da meta tag `<meta name="csrf-token" content="{{ csrf_token() }}">`, links para fontes Geist e montagem da `div#root`;
+  - [x] Implementar `app/static/css/style.css` com todas as diretrizes do `docs/DESIGN.md`:
     - Fundo near-black (`#09090b`), superfícies zinc (`#0c0c0f` a `#27272a`), bordas finas `1px solid #27272a`;
     - Primário violeta suave (`#a78bfa`), esmeralda (`#34d399`) para sucessos, vermelho (`#ef4444`) para erros;
     - Tipografia Geist com letter-spacing refinado;
     - Modificador para tema claro invertido mantendo acentos funcionais;
-  - [ ] Fornecer scripts locais de React e ReactDOM em `app/static/js/vendor/` sem dependência de build Node.js;
-  - [ ] Criar cliente HTTP padronizado (`api.js` ou helper em `app.js`) que lê o CSRF token e anexa `X-CSRFToken` em requisições `POST`, `PUT`, `PATCH`, `DELETE`;
-  - [ ] Estruturar roteamento frontend e telas públicas de Login, Cadastro e Recuperação de Senha.
+  - [x] Fornecer scripts locais de React e ReactDOM em `app/static/js/vendor/` sem dependência de build Node.js;
+  - [x] Criar cliente HTTP padronizado (`api.js` ou helper em `app.js`) que lê o CSRF token e anexa `X-CSRFToken` em requisições `POST`, `PUT`, `PATCH`, `DELETE`;
+  - [x] Estruturar roteamento frontend e telas públicas de Login, Cadastro e Recuperação de Senha.
 * **Critérios de pronto:** Telas de autenticação renderizadas com visual Obsidian de alto contraste, alternância de tema funcional e submissões com token CSRF funcionando.
-* **Arquivos e pastas alterados:** `app/templates/index.html`, `app/static/css/style.css`, `app/static/js/`.
+* **Arquivos e pastas alterados:** `app/templates/index.html`, `app/static/css/style.css`, `app/static/js/`, `app/utils/csrf.py`.
 * **Dependências:** Fase 4 concluída.
+
 
 ---
 

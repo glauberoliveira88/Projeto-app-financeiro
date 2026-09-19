@@ -35,27 +35,38 @@ def create_app(config_class=Config):
     # 2. Inicialização da Extensão SQLAlchemy (Fase 3)
     db.init_app(app)
 
-    # 3. Registro dos Manipuladores Globais de Erro
+    # 3. Proteção e Injeção de CSRF Token (Fase 5)
+    from app.utils.csrf import init_csrf
+    init_csrf(app)
+
+    # 4. Registro dos Manipuladores Globais de Erro
     registrar_error_handlers(app)
 
-    # 4. Contexto de Sessão e Usuário Autenticado (Fase 4)
+    # 5. Contexto de Sessão e Usuário Autenticado (Fase 4)
     from app.utils.auth import obter_usuario_atual
     @app.before_request
     def carregar_usuario():
         obter_usuario_atual()
 
-    # 5. Registro de Blueprints / Controllers
+    # 6. Registro de Blueprints / Controllers
     from app.controllers import auth_bp
     app.register_blueprint(auth_bp)
 
-    # Rota raiz redirecionando para login ou dashboard
+    # Rota raiz servindo o shell da aplicação
     @app.route("/", methods=["GET"])
     def index():
-        from flask import redirect, url_for
-        from app.utils.auth import current_user
-        if current_user.is_authenticated:
-            return redirect(url_for("auth.dashboard_view"))
-        return redirect(url_for("auth.login_view"))
+        from flask import render_template
+        return render_template("index.html")
+
+    # Rotas web do shell (SPA / History API)
+    @app.route("/lancamentos", methods=["GET"])
+    @app.route("/contas", methods=["GET"])
+    @app.route("/categorias", methods=["GET"])
+    @app.route("/recorrentes", methods=["GET"])
+    @app.route("/configuracoes", methods=["GET"])
+    def spa_routes():
+        from flask import render_template
+        return render_template("index.html")
 
     # Rota básica de verificação de saúde da aplicação
     @app.route("/api/health", methods=["GET"])
@@ -70,7 +81,7 @@ def create_app(config_class=Config):
         return jsonify({
             "sucesso": True,
             "sistema": "FinançasSimples",
-            "fase": "Fase 4 - Autenticação, Sessão, Google OAuth e Proteção de Rotas",
+            "fase": "Fase 5 - Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React)",
             "banco_de_dados": db_status,
             "status": "ok",
         }), 200

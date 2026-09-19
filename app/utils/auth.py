@@ -9,22 +9,51 @@ from app.models import Usuario
 from app.services.logger_service import registrar_seguranca
 
 
+class UsuarioAnonimo:
+    """Representa um visitante anônimo não autenticado (FSD Seção 15)."""
+    id = None
+    nome = "Visitante"
+    email = None
+    is_authenticated = False
+    is_active = False
+    is_anonymous = True
+
+    def get_id(self):
+        return None
+
+    def to_dict(self):
+        return None
+
+    def __bool__(self):
+        return False
+
+
 def obter_usuario_atual():
-    """Retorna o usuário autenticado armazenado na sessão ativa (docs/FSD.md - Seção 15)."""
+    """Retorna o usuário autenticado armazenado na sessão ativa ou UsuarioAnonimo."""
     if not has_request_context():
-        return getattr(g, "current_user", None)
+        return getattr(g, "current_user", UsuarioAnonimo())
 
     usuario_id = session.get("usuario_id")
     if not usuario_id:
-        g.current_user = None
-        return None
+        anon = UsuarioAnonimo()
+        g.current_user = anon
+        return anon
 
     cached_user = getattr(g, "current_user", None)
     if cached_user is not None and getattr(cached_user, "id", None) == usuario_id:
         return cached_user
 
     from app.models import db
-    user = db.session.get(Usuario, usuario_id)
+    try:
+        user = db.session.get(Usuario, usuario_id)
+    except Exception:
+        user = None
+
+    if not user:
+        anon = UsuarioAnonimo()
+        g.current_user = anon
+        return anon
+
     g.current_user = user
     return user
 
@@ -42,7 +71,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user = obter_usuario_atual()
-        if not user:
+        if not user or not user.is_authenticated:
             # Se for requisição de API ou esperando JSON
             if request.path.startswith("/api/") or request.is_json or "application/json" in request.headers.get("Accept", ""):
                 return jsonify({
