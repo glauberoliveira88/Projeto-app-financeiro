@@ -668,10 +668,475 @@ function TelaRedefinirSenha() {
 }
 
 // ==============================================================================
+// Utilitários de Formatação
+// ==============================================================================
+function formatarMoeda(valor) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+}
+
+// ==============================================================================
+// Componente: Modal Genérico
+// ==============================================================================
+function Modal({ titulo, onFechar, children }) {
+  // Fechar ao clicar no overlay
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onFechar();
+  };
+  return (
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="modal-container" role="dialog" aria-modal="true">
+        <div className="modal-header">
+          <h3 className="modal-titulo">{titulo}</h3>
+          <button type="button" className="modal-fechar" onClick={onFechar} aria-label="Fechar modal">✕</button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ==============================================================================
+// Componente: Tela de Contas e Carteiras
+// ==============================================================================
+function TelaContas() {
+  const [contas, setContas] = React.useState([]);
+  const [saldoTotal, setSaldoTotal] = React.useState(0);
+  const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState('');
+  const [modalAberto, setModalAberto] = React.useState(false);
+  const [contaEmEdicao, setContaEmEdicao] = React.useState(null);
+  const [formNome, setFormNome] = React.useState('');
+  const [formSaldo, setFormSaldo] = React.useState('0');
+  const [salvando, setSalvando] = React.useState(false);
+  const [mensagemSucesso, setMensagemSucesso] = React.useState('');
+  const [erroModal, setErroModal] = React.useState('');
+
+  const carregarContas = async () => {
+    setCarregando(true);
+    setErro('');
+    try {
+      const res = await window.api.get('/api/contas');
+      if (res && res.sucesso) {
+        setContas(res.dados.contas);
+        setSaldoTotal(res.dados.saldo_total_ativo);
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao carregar contas. Tente novamente.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  React.useEffect(() => {
+    carregarContas();
+  }, []);
+
+  const abrirModalNova = () => {
+    setContaEmEdicao(null);
+    setFormNome('');
+    setFormSaldo('0');
+    setErroModal('');
+    setModalAberto(true);
+  };
+
+  const abrirModalEditar = (conta) => {
+    setContaEmEdicao(conta);
+    setFormNome(conta.nome);
+    setFormSaldo('');
+    setErroModal('');
+    setModalAberto(true);
+  };
+
+  const fecharModal = () => {
+    setModalAberto(false);
+    setContaEmEdicao(null);
+    setErroModal('');
+  };
+
+  const exibirSucesso = (msg) => {
+    setMensagemSucesso(msg);
+    setTimeout(() => setMensagemSucesso(''), 3500);
+  };
+
+  const handleSalvar = async (e) => {
+    e.preventDefault();
+    setErroModal('');
+    const nome = formNome.trim();
+    if (!nome) { setErroModal('O nome da conta é obrigatório.'); return; }
+
+    setSalvando(true);
+    try {
+      if (contaEmEdicao) {
+        // Edição: altera apenas o nome
+        const res = await window.api.put(`/api/contas/${contaEmEdicao.id}`, { nome });
+        if (res && res.sucesso) {
+          exibirSucesso(res.mensagem || 'Conta atualizada com sucesso.');
+          fecharModal();
+          carregarContas();
+        } else {
+          setErroModal((res && res.erro) || 'Erro ao atualizar conta.');
+        }
+      } else {
+        // Criação
+        const saldoNum = parseFloat(formSaldo.replace(',', '.')) || 0;
+        const res = await window.api.post('/api/contas', { nome, saldo_inicial: saldoNum });
+        if (res && res.sucesso) {
+          exibirSucesso(res.mensagem || 'Conta criada com sucesso.');
+          fecharModal();
+          carregarContas();
+        } else {
+          setErroModal((res && res.erro) || 'Erro ao criar conta.');
+        }
+      }
+    } catch (err) {
+      setErroModal(err.message || 'Erro inesperado. Tente novamente.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleArquivar = async (conta) => {
+    if (!window.confirm(`Deseja arquivar a conta "${conta.nome}"? Ela ficará inativa para novos lançamentos, mas o histórico será preservado.`)) return;
+    try {
+      const res = await window.api.patch(`/api/contas/${conta.id}/arquivar`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Conta arquivada.');
+        carregarContas();
+      } else {
+        setErro((res && res.erro) || 'Erro ao arquivar conta.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao arquivar conta.');
+    }
+  };
+
+  const handleReativar = async (conta) => {
+    try {
+      const res = await window.api.patch(`/api/contas/${conta.id}/reativar`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Conta reativada.');
+        carregarContas();
+      } else {
+        setErro((res && res.erro) || 'Erro ao reativar conta.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao reativar conta.');
+    }
+  };
+
+  const handleExcluir = async (conta) => {
+    if (!window.confirm(`Tem certeza que deseja excluir permanentemente a conta "${conta.nome}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      const res = await window.api.delete(`/api/contas/${conta.id}`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Conta excluída.');
+        carregarContas();
+      } else {
+        // Se tiver histórico, orienta o usuário a arquivar
+        setErro((res && res.erro) || 'Não foi possível excluir a conta.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao excluir conta.');
+    }
+  };
+
+  const contasAtivas = contas.filter(c => c.status === 'ativo');
+  const contasArquivadas = contas.filter(c => c.status === 'arquivado');
+
+  return (
+    <div className="module-container">
+      {/* Cabeçalho do módulo */}
+      <div className="module-header">
+        <div>
+          <h2 className="module-title">Contas &amp; Carteiras</h2>
+          <p className="module-subtitle">Gerencie onde seu dinheiro está custodiado.</p>
+        </div>
+        <button type="button" className="btn btn-primary" onClick={abrirModalNova}>
+          + Nova Conta
+        </button>
+      </div>
+
+      {/* Alertas */}
+      {mensagemSucesso && <div className="alert alert-success">{mensagemSucesso}</div>}
+      {erro && <div className="alert alert-error">{erro}<button className="alert-fechar" onClick={() => setErro('')}>✕</button></div>}
+
+      {/* Card de saldo consolidado */}
+      <div className="summary-card">
+        <div className="summary-label">Saldo Total (Contas Ativas)</div>
+        <div className={`summary-value ${saldoTotal >= 0 ? 'valor-positivo' : 'valor-negativo'}`}>
+          {formatarMoeda(saldoTotal)}
+        </div>
+        <div className="summary-meta">{contasAtivas.length} conta{contasAtivas.length !== 1 ? 's' : ''} ativa{contasAtivas.length !== 1 ? 's' : ''}</div>
+      </div>
+
+      {carregando ? (
+        <div className="skeleton-list">
+          {[1, 2, 3].map(i => <div key={i} className="skeleton-card" />)}
+        </div>
+      ) : (
+        <>
+          {/* Grade de Contas Ativas */}
+          {contasAtivas.length > 0 ? (
+            <div className="section-block">
+              <h3 className="section-title">Contas Ativas</h3>
+              <div className="cards-grid">
+                {contasAtivas.map(conta => (
+                  <div key={conta.id} className="account-card">
+                    <div className="account-card-header">
+                      <span className="account-name">{conta.nome}</span>
+                      <span className="badge badge-active">Ativa</span>
+                    </div>
+                    <div className={`account-balance ${conta.saldo_atual >= 0 ? 'valor-positivo' : 'valor-negativo'}`}>
+                      {formatarMoeda(conta.saldo_atual)}
+                    </div>
+                    <div className="account-meta">Saldo inicial: {formatarMoeda(conta.saldo_inicial)}</div>
+                    <div className="account-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => abrirModalEditar(conta)}
+                        title="Editar nome"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleArquivar(conta)}
+                        title="Arquivar conta"
+                      >
+                        📦 Arquivar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm btn-danger"
+                        onClick={() => handleExcluir(conta)}
+                        title="Excluir conta"
+                      >
+                        🗑️ Excluir
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">🏦</div>
+              <p className="empty-title">Nenhuma conta ativa</p>
+              <p className="empty-subtitle">Crie sua primeira conta para começar a registrar lançamentos.</p>
+              <button type="button" className="btn btn-primary" onClick={abrirModalNova}>
+                + Criar Primeira Conta
+              </button>
+            </div>
+          )}
+
+          {/* Seção de Contas Arquivadas */}
+          {contasArquivadas.length > 0 && (
+            <div className="section-block section-archived">
+              <h3 className="section-title">Contas Arquivadas</h3>
+              <div className="cards-grid">
+                {contasArquivadas.map(conta => (
+                  <div key={conta.id} className="account-card account-card-archived">
+                    <div className="account-card-header">
+                      <span className="account-name">{conta.nome}</span>
+                      <span className="badge badge-archived">Arquivada</span>
+                    </div>
+                    <div className="account-balance" style={{ color: 'var(--text-muted)' }}>
+                      {formatarMoeda(conta.saldo_atual)}
+                    </div>
+                    <div className="account-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleReativar(conta)}
+                        title="Reativar conta"
+                      >
+                        ♻️ Reativar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm btn-danger"
+                        onClick={() => handleExcluir(conta)}
+                        title="Excluir conta permanentemente"
+                      >
+                        🗑️ Excluir
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Modal de Criação / Edição */}
+      {modalAberto && (
+        <Modal
+          titulo={contaEmEdicao ? `Editar: ${contaEmEdicao.nome}` : 'Nova Conta'}
+          onFechar={fecharModal}
+        >
+          <form onSubmit={handleSalvar}>
+            {erroModal && <div className="alert alert-error">{erroModal}</div>}
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="conta-nome">Nome da Conta</label>
+              <input
+                id="conta-nome"
+                type="text"
+                required
+                maxLength={100}
+                className="form-input"
+                placeholder="Ex: Nubank, Carteira, Poupança..."
+                value={formNome}
+                onChange={(e) => setFormNome(e.target.value)}
+                disabled={salvando}
+                autoFocus
+              />
+            </div>
+
+            {!contaEmEdicao && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="conta-saldo">Saldo Inicial (R$)</label>
+                <input
+                  id="conta-saldo"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="form-input"
+                  placeholder="0,00"
+                  value={formSaldo}
+                  onChange={(e) => setFormSaldo(e.target.value)}
+                  disabled={salvando}
+                />
+                <span className="form-helper">Informe quanto você possui nesta conta agora.</span>
+              </div>
+            )}
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={salvando}>
+                {salvando ? 'Salvando...' : (contaEmEdicao ? 'Salvar Alterações' : 'Criar Conta')}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==============================================================================
+// Componente: Páginas de Módulos Futuros (placeholder)
+// ==============================================================================
+function TelaDashboard() {
+  return (
+    <div className="module-container">
+      <div className="module-header">
+        <div>
+          <h2 className="module-title">Painel Principal</h2>
+          <p className="module-subtitle">Visão geral do mês — em construção.</p>
+        </div>
+      </div>
+      <div className="empty-state">
+        <div className="empty-icon">📊</div>
+        <p className="empty-title">Dashboard em construção</p>
+        <p className="empty-subtitle">Será implementado na Fase 10. Utilize o menu lateral para navegar.</p>
+      </div>
+    </div>
+  );
+}
+
+function TelaLancamentos() {
+  return (
+    <div className="module-container">
+      <div className="module-header">
+        <div><h2 className="module-title">Lançamentos</h2></div>
+      </div>
+      <div className="empty-state">
+        <div className="empty-icon">💳</div>
+        <p className="empty-title">Módulo em construção</p>
+        <p className="empty-subtitle">Será implementado na Fase 8.</p>
+      </div>
+    </div>
+  );
+}
+
+function TelaCategorias() {
+  return (
+    <div className="module-container">
+      <div className="module-header">
+        <div><h2 className="module-title">Categorias &amp; Tetos</h2></div>
+      </div>
+      <div className="empty-state">
+        <div className="empty-icon">🏷️</div>
+        <p className="empty-title">Módulo em construção</p>
+        <p className="empty-subtitle">Será implementado na Fase 7.</p>
+      </div>
+    </div>
+  );
+}
+
+function TelaRecorrentes() {
+  return (
+    <div className="module-container">
+      <div className="module-header">
+        <div><h2 className="module-title">Fixos Recorrentes</h2></div>
+      </div>
+      <div className="empty-state">
+        <div className="empty-icon">🔁</div>
+        <p className="empty-title">Módulo em construção</p>
+        <p className="empty-subtitle">Será implementado na Fase 9.</p>
+      </div>
+    </div>
+  );
+}
+
+function TelaConfiguracoes() {
+  return (
+    <div className="module-container">
+      <div className="module-header">
+        <div><h2 className="module-title">Configurações</h2></div>
+      </div>
+      <div className="empty-state">
+        <div className="empty-icon">⚙️</div>
+        <p className="empty-title">Módulo em construção</p>
+        <p className="empty-subtitle">Será implementado na Fase 11.</p>
+      </div>
+    </div>
+  );
+}
+
+// ==============================================================================
 // Shell Autenticado (Base para Fases 6 a 11)
 // ==============================================================================
 function ShellAutenticado() {
-  const { usuario, logoSrc, logout, rotaAtual, navegar } = useApp();
+  const { usuario, logoSrc, logout, rotaAtual, navegar, tema, alternarTema } = useApp();
+
+  // Título e subtítulo da página conforme rota ativa
+  const obterTituloPagina = () => {
+    if (rotaAtual === '/contas') return { titulo: 'Contas & Carteiras', sub: 'Gerencie seus saldos e carteiras' };
+    if (rotaAtual === '/lancamentos') return { titulo: 'Lançamentos', sub: 'Registre e controle suas movimentações' };
+    if (rotaAtual === '/categorias') return { titulo: 'Categorias & Tetos', sub: 'Organize e controle seus gastos' };
+    if (rotaAtual === '/recorrentes') return { titulo: 'Fixos Recorrentes', sub: 'Automatize suas despesas e receitas fixas' };
+    if (rotaAtual === '/configuracoes') return { titulo: 'Configurações', sub: 'Preferências e dados do perfil' };
+    return { titulo: 'Painel Principal', sub: `Bem-vindo, ${(usuario.nome || '').split(' ')[0]}!` };
+  };
+
+  const { titulo, sub } = obterTituloPagina();
+
+  // Renderiza o módulo correspondente à rota
+  const renderizarModulo = () => {
+    if (rotaAtual === '/contas') return <TelaContas />;
+    if (rotaAtual === '/lancamentos') return <TelaLancamentos />;
+    if (rotaAtual === '/categorias') return <TelaCategorias />;
+    if (rotaAtual === '/recorrentes') return <TelaRecorrentes />;
+    if (rotaAtual === '/configuracoes') return <TelaConfiguracoes />;
+    return <TelaDashboard />;
+  };
 
   return (
     <div className="app-layout">
@@ -684,61 +1149,43 @@ function ShellAutenticado() {
         <nav className="sidebar-nav">
           <a
             href="/dashboard"
-            className={`nav-link ${rotaAtual === '/dashboard' || rotaAtual === '/' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/dashboard');
-            }}
+            className={`nav-link ${(rotaAtual === '/dashboard' || rotaAtual === '/') ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); navegar('/dashboard'); }}
           >
             <span>📊</span> Painel Principal
           </a>
           <a
             href="/lancamentos"
             className={`nav-link ${rotaAtual === '/lancamentos' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/lancamentos');
-            }}
+            onClick={(e) => { e.preventDefault(); navegar('/lancamentos'); }}
           >
             <span>💳</span> Lançamentos
           </a>
           <a
             href="/contas"
             className={`nav-link ${rotaAtual === '/contas' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/contas');
-            }}
+            onClick={(e) => { e.preventDefault(); navegar('/contas'); }}
           >
-            <span>🏦</span> Contas & Carteiras
+            <span>🏦</span> Contas &amp; Carteiras
           </a>
           <a
             href="/categorias"
             className={`nav-link ${rotaAtual === '/categorias' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/categorias');
-            }}
+            onClick={(e) => { e.preventDefault(); navegar('/categorias'); }}
           >
-            <span>🏷️</span> Categorias & Tetos
+            <span>🏷️</span> Categorias &amp; Tetos
           </a>
           <a
             href="/recorrentes"
             className={`nav-link ${rotaAtual === '/recorrentes' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/recorrentes');
-            }}
+            onClick={(e) => { e.preventDefault(); navegar('/recorrentes'); }}
           >
             <span>🔁</span> Fixos Recorrentes
           </a>
           <a
             href="/configuracoes"
             className={`nav-link ${rotaAtual === '/configuracoes' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navegar('/configuracoes');
-            }}
+            onClick={(e) => { e.preventDefault(); navegar('/configuracoes'); }}
           >
             <span>⚙️</span> Configurações
           </a>
@@ -766,51 +1213,18 @@ function ShellAutenticado() {
       <main className="main-content">
         <header className="top-bar">
           <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Painel Geral</h2>
-            <p style={{ fontSize: '0.875rem' }}>
-              Bem-vindo ao <strong>FinançasSimples</strong>, {usuario.nome.split(' ')[0]}!
-            </p>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.125rem', letterSpacing: '-0.02em' }}>
+              {titulo}
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{sub}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <BotaoAlternarTema />
           </div>
         </header>
 
-        {/* Card de Boas-Vindas da Fase 5 */}
-        <div
-          style={{
-            backgroundColor: 'var(--surface-base)',
-            border: 'var(--border-width) solid var(--border-color)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '2rem',
-            marginBottom: '2rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>✨</span>
-            <h3 style={{ fontSize: '1.25rem' }}>Ambiente Base Configurado com Sucesso (Fase 5)</h3>
-          </div>
-          <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-            A casca React e o Design System Obsidian de alto contraste estão ativos, operando com proteção CSRF
-            transparente e isolamento estrito de dados por usuário.
-          </p>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.4rem 0.8rem',
-              backgroundColor: 'var(--tertiary-bg)',
-              color: 'var(--tertiary)',
-              border: '1px solid var(--tertiary)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-            }}
-          >
-            ✓ Sessão Ativa: {usuario.email}
-          </div>
-        </div>
+        {/* Módulo ativo */}
+        {renderizarModulo()}
       </main>
     </div>
   );

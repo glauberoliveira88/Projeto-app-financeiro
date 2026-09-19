@@ -49,8 +49,9 @@ def create_app(config_class=Config):
         obter_usuario_atual()
 
     # 6. Registro de Blueprints / Controllers
-    from app.controllers import auth_bp
+    from app.controllers import auth_bp, contas_bp
     app.register_blueprint(auth_bp)
+    app.register_blueprint(contas_bp)
 
     # Rota raiz servindo o shell da aplicação
     @app.route("/", methods=["GET"])
@@ -59,6 +60,7 @@ def create_app(config_class=Config):
         return render_template("index.html")
 
     # Rotas web do shell (SPA / History API)
+    @app.route("/dashboard", methods=["GET"])
     @app.route("/lancamentos", methods=["GET"])
     @app.route("/contas", methods=["GET"])
     @app.route("/categorias", methods=["GET"])

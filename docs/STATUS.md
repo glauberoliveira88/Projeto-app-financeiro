@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-09-19 (Conclusão da Fase 5 — Shell Base da Interface: Design Obsidian, CSS, Meta CSRF e Casca React)
-* **Fase atual:** Fase 5 concluída — Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React)
-* **Próximo passo recomendado:** Iniciar a Fase 6 (Módulo de Contas e Carteiras)
+* **Última atualização:** 2026-09-19 (Conclusão da Fase 6 — Módulo de Contas e Carteiras)
+* **Fase atual:** Fase 6 concluída — Módulo de Contas e Carteiras
+* **Próximo passo recomendado:** Iniciar a Fase 7 (Módulo de Categorias e Orçamentos)
 
 ---
 
@@ -15,7 +15,7 @@
 | **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | **Concluída** |
 | **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | **Concluída** |
 | **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | **Concluída** |
-| **Fase 6** | Módulo de Contas e Carteiras | Pendente |
+| **Fase 6** | Módulo de Contas e Carteiras | **Concluída** |
 | **Fase 7** | Módulo de Categorias e Orçamentos (Provisionamento Canônico e Reatribuição) | Pendente |
 | **Fase 8** | Módulo de Lançamentos (Receitas, Despesas, Transferências e Soft Delete) | Pendente |
 | **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | Pendente |
@@ -81,10 +81,11 @@
 ---
 
 ### Fase 6 — Módulo de Contas e Carteiras
-- [ ] Implementar `app/controllers/contas_controller.py` com endpoints `/api/contas/*`;
-- [ ] Implementar cálculo de saldo contábil em tempo real;
-- [ ] Implementar regras de arquivamento, reativação e bloqueio de exclusão física se houver movimentações;
-- [ ] Construir componentes React de gestão de contas.
+- [x] Implementar `app/controllers/contas_controller.py` com endpoints `/api/contas/*` (listagem, criação, edição, arquivamento, reativação e exclusão);
+- [x] Implementar cálculo de saldo contábil em tempo real conforme fórmula do FSD;
+- [x] Implementar regras de arquivamento, reativação e bloqueio de exclusão física se houver movimentações vinculadas (ativas ou soft-deletadas);
+- [x] Construir componentes React de gestão de contas (`TelaContas`, `Modal`, cards com badges e saldo consolidado);
+- [x] Implementar suíte de testes unitários automatizados com 100% de aprovação (`tests/test_fase6_contas.py`).
 
 ---
 
