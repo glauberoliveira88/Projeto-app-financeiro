@@ -87,8 +87,8 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Implementar o fluxo completo de autenticação híbrida (e-mail/senha e Google OAuth), emissão de cookies de sessão seguros, recuperação de senha com fallback SMTP e controle de acesso estrito com `@login_required`.
 * **Checklist de tarefas:**
-  - [ ] Configurar Flask-Login ou gerenciamento seguro de sessões com cookies HTTP-only, SameSite=Lax;
-  - [ ] Implementar `app/controllers/auth_controller.py`:
+  - [x] Configurar Flask-Login ou gerenciamento seguro de sessões com cookies HTTP-only, SameSite=Lax;
+  - [x] Implementar `app/controllers/auth_controller.py`:
     - Rota `POST /api/auth/cadastro` com validação de senha (mínimo 8 caracteres), unicidade de e-mail e provisionamento automático da lista canônica de 10 categorias padrão e da carteira inicial padrão (*"Carteira"* com saldo R$ 0,00);
     - Rota `POST /api/auth/login` com verificação de hash forte (`werkzeug.security`) e proteção contra força bruta (bloqueio após 5 tentativas por 15 minutos e registro em `logs_seguranca`);
     - Rota `POST /api/auth/logout` para destruição de sessão;
@@ -96,8 +96,8 @@ Este documento define as fases incrementais para a construção completa do sist
     - Rota `POST /api/auth/redefinir-senha` para validação de token e atualização de senha;
     - Rotas de fluxo Google OAuth 2.0 (`GET /api/auth/google` e `GET /api/auth/google/callback`) com provisionamento automático no primeiro acesso;
     - Rota `GET /api/auth/sessao` para verificação de usuário ativo;
-  - [ ] Implementar decorador `@login_required` com retorno JSON 401 para API e redirecionamento para web;
-  - [ ] Assegurar bloqueio de IDOR e isolamento absoluto por `usuario_id`.
+  - [x] Implementar decorador `@login_required` com retorno JSON 401 para API e redirecionamento para web;
+  - [x] Assegurar bloqueio de IDOR e isolamento absoluto por `usuario_id`.
 * **Critérios de pronto:** Cadastro, login tradicional, login Google, recuperação e proteção de endpoints autenticados operando perfeitamente.
 * **Arquivos e pastas alterados:** `app/controllers/auth_controller.py`, `app/__init__.py`, `config/config.py`.
 * **Dependências:** Fase 3 concluída.

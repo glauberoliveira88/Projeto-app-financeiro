@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-09-12 (Conclusão da Fase 3 — Camada de Modelos (ORM) e Mecanismo de Logs Estruturados)
-* **Fase atual:** Fase 3 concluída — Camada de Modelos (ORM) e Mecanismo de Logs Estruturados
-* **Próximo passo recomendado:** Iniciar a Fase 4 (Autenticação, Sessão, Google OAuth e Proteção de Rotas)
+* **Última atualização:** 2026-09-19 (Conclusão da Fase 4 — Autenticação, Sessão, Google OAuth e Proteção de Rotas)
+* **Fase atual:** Fase 4 concluída — Autenticação, Sessão, Google OAuth e Proteção de Rotas
+* **Próximo passo recomendado:** Iniciar a Fase 5 (Shell Base da Interface: Design Obsidian, CSS, Meta CSRF e Casca React)
 
 ---
 
@@ -13,7 +13,7 @@
 | **Fase 1** | Infraestrutura e Base do Projeto | **Concluída** |
 | **Fase 2** | Banco de Dados, Schema e Migrations Versionadas | **Concluída** |
 | **Fase 3** | Camada de Modelos (ORM) e Mecanismo de Logs Estruturados | **Concluída** |
-| **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | Pendente |
+| **Fase 4** | Autenticação, Sessão, Google OAuth e Proteção de Rotas | **Concluída** |
 | **Fase 5** | Shell Base da Interface (Design Obsidian, CSS, Meta CSRF e Casca React) | Pendente |
 | **Fase 6** | Módulo de Contas e Carteiras | Pendente |
 | **Fase 7** | Módulo de Categorias e Orçamentos (Provisionamento Canônico e Reatribuição) | Pendente |
@@ -60,10 +60,11 @@
 ---
 
 ### Fase 4 — Autenticação, Sessão, Google OAuth e Proteção de Rotas
-- [ ] Configurar gerenciamento de sessão seguro via cookies HTTP-only;
-- [ ] Implementar endpoints `/api/auth/*` no `auth_controller.py` (cadastro, login, logout, recuperação de senha com fallback SMTP/console, sessão);
-- [ ] Implementar integração Google OAuth 2.0;
-- [ ] Implementar decorador `@login_required` e isolamento estrito por `usuario_id`.
+- [x] Configurar gerenciamento de sessão seguro via cookies HTTP-only, SameSite=Lax e tempo persistente;
+- [x] Implementar endpoints `/api/auth/*` no `auth_controller.py` (cadastro com provisionamento canônico das 10 categorias e da carteira inicial padrão "Carteira", login tradicional com hash forte, logout com destruição de sessão, recuperação de senha com fallback de console/log, redefinição com token de 60 min, consulta de sessão ativa e defesa contra força bruta com 5 falhas em 15 min bloqueando por 15 min via `logs_seguranca`);
+- [x] Implementar integração Google OAuth 2.0 (rotas `/api/auth/google` e `/api/auth/google/callback` com provisionamento atômico no primeiro acesso e tratamento de cancelamento);
+- [x] Implementar decorador `@login_required` com retorno JSON 401 para requisições de API e redirecionamento web, além da função de salvaguarda `validar_posse` contra IDOR;
+- [x] Criar suíte de testes automatizados completa com 100% de aprovação (`tests/test_fase4_auth.py`).
 
 ---
 

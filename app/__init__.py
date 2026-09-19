@@ -38,6 +38,25 @@ def create_app(config_class=Config):
     # 3. Registro dos Manipuladores Globais de Erro
     registrar_error_handlers(app)
 
+    # 4. Contexto de Sessão e Usuário Autenticado (Fase 4)
+    from app.utils.auth import obter_usuario_atual
+    @app.before_request
+    def carregar_usuario():
+        obter_usuario_atual()
+
+    # 5. Registro de Blueprints / Controllers
+    from app.controllers import auth_bp
+    app.register_blueprint(auth_bp)
+
+    # Rota raiz redirecionando para login ou dashboard
+    @app.route("/", methods=["GET"])
+    def index():
+        from flask import redirect, url_for
+        from app.utils.auth import current_user
+        if current_user.is_authenticated:
+            return redirect(url_for("auth.dashboard_view"))
+        return redirect(url_for("auth.login_view"))
+
     # Rota básica de verificação de saúde da aplicação
     @app.route("/api/health", methods=["GET"])
     def health_check():
@@ -51,7 +70,7 @@ def create_app(config_class=Config):
         return jsonify({
             "sucesso": True,
             "sistema": "FinançasSimples",
-            "fase": "Fase 3 - Camada de Modelos (ORM) e Logs Estruturados",
+            "fase": "Fase 4 - Autenticação, Sessão, Google OAuth e Proteção de Rotas",
             "banco_de_dados": db_status,
             "status": "ok",
         }), 200
