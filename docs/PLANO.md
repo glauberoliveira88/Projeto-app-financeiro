@@ -128,13 +128,13 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Implementar a gestão completa de contas e carteiras financeiras com cálculo de saldos em tempo real, proteção contra exclusão com histórico e fluxo de arquivamento.
 * **Checklist de tarefas:**
-  - [ ] Criar `app/controllers/contas_controller.py`:
+  - [x] Criar `app/controllers/contas_controller.py`:
     - `GET /api/contas` (listagem de contas do usuário logado com saldo em tempo real calculado por fórmula contábil);
     - `POST /api/contas` (criação com validação de unicidade de nome e saldo inicial);
     - `PUT /api/contas/<id>` (edição de nome da conta);
     - `PATCH /api/contas/<id>/arquivar` e `PATCH /api/contas/<id>/reativar`;
     - `DELETE /api/contas/<id>` (bloqueada se houver movimentações vinculadas ativas ou soft-deletadas; permitida apenas sem histórico);
-  - [ ] Construir componentes de interface React para Contas (grade de cartões, exibição de saldo total consolidado, badges ativa/arquivada e modal de criação/edição).
+  - [x] Construir componentes de interface React para Contas (grade de cartões, exibição de saldo total consolidado, badges ativa/arquivada e modal de criação/edição).
 * **Critérios de pronto:** Cadastro, edição, arquivamento, reativação e exclusão protegida de contas funcionando com recálculo imediato de saldos.
 * **Arquivos e pastas alterados:** `app/controllers/contas_controller.py`, `app/static/js/`.
 * **Dependências:** Fase 5 concluída.
@@ -163,14 +163,14 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Implementar o gerenciamento completo de movimentações financeiras (receitas, despesas e transferências entre contas próprias), filtros avançados, busca em tempo real e soft delete.
 * **Checklist de tarefas:**
-  - [ ] Criar `app/controllers/lancamentos_controller.py`:
+  - [x] Criar `app/controllers/lancamentos_controller.py`:
     - `GET /api/lancamentos` (filtros por mês/ano, conta, categoria, tipo, status e termo de busca textual);
     - `POST /api/lancamentos` (criação de receita ou despesa validando posse de conta/categoria e datas);
     - `POST /api/lancamentos/transferencia` (criação de transferência entre contas próprias com validação de contas distintas, `data_vencimento = data_competencia` e `status = pago`);
     - `PUT /api/lancamentos/<id>` (edição de campos e ajuste de saldos);
     - `PATCH /api/lancamentos/<id>/pagar` (alternância rápida entre status pendente e pago);
     - `DELETE /api/lancamentos/<id>` (exclusão lógica preenchendo `deleted_at` e revertendo saldo se status era pago);
-  - [ ] Construir componentes de interface React para Lançamentos (tabela/cards responsivos, badges de status, modal com abas [Despesa | Receita | Transferência] e busca em tempo real).
+  - [x] Construir componentes de interface React para Lançamentos (tabela/cards responsivos, badges de status, modal com abas [Despesa | Receita | Transferência] e busca em tempo real).
 * **Critérios de pronto:** CRUD de lançamentos completo, transferências isoladas sem inflar indicadores gerais, soft delete operacional e recálculo dinâmico de saldos.
 * **Arquivos e pastas alterados:** `app/controllers/lancamentos_controller.py`, `app/static/js/`.
 * **Dependências:** Fase 6 e Fase 7 concluídas.
