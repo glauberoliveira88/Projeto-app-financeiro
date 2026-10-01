@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-01 (Conclusão da Fase 8: Módulo de Lançamentos com receitas, despesas, transferências, soft delete e interface React)
-* **Fase atual:** Fase 8 concluída — Módulo de Lançamentos
-* **Próximo passo recomendado:** Iniciar a Fase 9 (Módulo de Lançamentos Recorrentes)
+* **Última atualização:** 2026-10-01 (Conclusão da Fase 9: Módulo de Lançamentos Recorrentes com automação de fixos, sincronização transparente e interface React)
+* **Fase atual:** Fase 9 concluída — Módulo de Lançamentos Recorrentes
+* **Próximo passo recomendado:** Iniciar a Fase 10 (Módulo do Painel Principal - Dashboard, Gráficos Monocromáticos e Alertas)
 
 
 
@@ -20,7 +20,7 @@
 | **Fase 6** | Módulo de Contas e Carteiras | **Concluída** |
 | **Fase 7** | Módulo de Categorias e Orçamentos (Provisionamento Canônico e Reatribuição) | **Concluída** |
 | **Fase 8** | Módulo de Lançamentos (Receitas, Despesas, Transferências e Soft Delete) | **Concluída** |
-| **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | Pendente |
+| **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | **Concluída** |
 | **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | Pendente |
 | **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | Pendente |
 | **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | Pendente |
@@ -112,10 +112,11 @@
 ---
 
 ### Fase 9 — Módulo de Lançamentos Recorrentes
-- [ ] Implementar `app/controllers/recorrentes_controller.py` com endpoints `/api/recorrentes/*`;
-- [ ] Implementar serviço transparente de verificação e geração de lançamentos de virada de mês (sincronizado com Dashboard e Lançamentos);
-- [ ] Tratar ajuste automático de dia de vencimento em meses mais curtos;
-- [ ] Construir componentes React para gerenciamento de fixos.
+- [x] Implementar `app/controllers/recorrentes_controller.py` com endpoints `/api/recorrentes/*` (listagem, cadastro, edição, toggle ativo/pausado, exclusão e sincronização);
+- [x] Implementar serviço transparente de verificação e geração de lançamentos de virada de mês (`app/services/recorrentes_service.py`), integrado ao `GET /api/lancamentos`;
+- [x] Tratar ajuste automático de dia de vencimento em meses mais curtos (dia 31 ajustado para último dia válido do mês);
+- [x] Construir componentes React para gerenciamento de fixos (`TelaRecorrentes`, cards Obsidian, resumo com total de despesas e receitas fixas, modal com abas, stepper monetário de R$ 1,00 e modal de exclusão);
+- [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase9_recorrentes.py`).
 
 ---
 

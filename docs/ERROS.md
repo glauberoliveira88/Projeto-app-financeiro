@@ -63,12 +63,14 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
   4. Ampliação do destaque tipográfico do nome da categoria (`.category-name`) para 18px (`1.125rem`), peso 700 e `letter-spacing: -0.02em`.
 - **Como evitar no futuro:** Em telas modais contendo formulários com campos de preenchimento, nunca permitir o fechamento silencioso por clique fora sem confirmação, e padronizar campos monetários com prefixo explícito `R$` e formatação contínua de centavos.
 
-## 2026-09-29 - Remoção da aura circular ao redor do ícone de moeda nas categorias
+## 2026-10-01 - Tratamento de string monetária na API e exigência de retorno explícito HTTP 403 em `validar_posse`
 
-- **Sintoma:** O ícone de moeda nos cards de categoria exibia uma "aura" lilás translúcida circular com borda (`.category-icon-coin`), gerando ruído visual indesejado para a identidade minimalista da tela.
-- **Causa:** Regra CSS `.category-icon-coin` definia `background`, `border` e dimensões fixas (36px x 36px) simulando uma medalha/badge circular.
-- **Solução aplicada:** Remoção das propriedades de background e borda de `.category-icon-coin` em `app/static/css/style.css`, mantendo apenas a moeda `🪙` limpa e dimensionada diretamente ao lado do nome da categoria.
-- **Como evitar no futuro:** Preservar a sobriedade dos ícones evitando invólucros coloridos não previstos estritamente no DESIGN.md Obsidian.
+- **Sintoma:** Ao cadastrar ou atualizar lançamento recorrente com valor numérico em string (`"1500.00"`), a remoção incondicional do caractere ponto convertia o valor para `150000.00`. Além disso, chamadas a `validar_posse` não bloqueavam a execução imediatamente caso o chamador não verificasse o valor booleano retornado.
+- **Causa:** O método de limpeza de string tratava ponto como separador de milhar brasileiro mesmo quando não havia vírgula decimal na string recebida via API JSON. Adicionalmente, a função utilitária `validar_posse` registra o evento de segurança e retorna `False`, cabendo ao Controller checar a resposta e emitir explicitamente a resposta HTTP 403 Forbidden.
+- **Solução aplicada:**
+  1. Criação do helper `converter_valor_decimal` que detecta a presença de vírgula e ponto, tratando corretamente tanto formatações brasileiras (`1.500,00`) quanto números decimais padrão em ponto flutuante (`1500.00` ou `1500`).
+  2. Adição de verificação explícita `if not validar_posse(recurso, "tipo"): return jsonify({"sucesso": False, "erro": "Acesso não autorizado."}), 403` em todas as rotas e validações de chaves estrangeiras (`categoria_id`, `conta_id`, `id`) no `recorrentes_controller.py`.
+- **Como evitar no futuro:** Em endpoints de API REST, padronizar conversores numéricos resilientes a múltiplos formatos e sempre validar explicitamente o booleano de retorno de salvaguardas de autorização (`if not validar_posse(...) return 403`).
 
 
 

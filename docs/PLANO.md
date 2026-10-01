@@ -181,19 +181,19 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Implementar os modelos de movimentações fixas mensais e a rotina transparente de geração automática de lançamentos na virada do ciclo, sincronizada entre Dashboard e listagem.
 * **Checklist de tarefas:**
-  - [ ] Criar `app/controllers/recorrentes_controller.py`:
+  - [x] Criar `app/controllers/recorrentes_controller.py`:
     - `GET /api/recorrentes` (listagem de modelos fixos ativos e inativos);
     - `POST /api/recorrentes` (cadastro de modelo informando dia do vencimento 1 a 31);
     - `PUT /api/recorrentes/<id>` (edição dos parâmetros do modelo);
     - `PATCH /api/recorrentes/<id>/toggle` (ativação/desativação rápida);
     - `DELETE /api/recorrentes/<id>` (exclusão do modelo sem apagar lançamentos passados);
-  - [ ] Implementar serviço de sincronização automática de recorrências:
+  - [x] Implementar serviço de sincronização automática de recorrências:
     - Executado de forma transparente ao consultar `GET /api/dashboard/resumo` e `GET /api/lancamentos`;
     - Gera lançamentos pendentes para modelos ativos que ainda não foram gerados no mês corrente;
     - Trata meses com menos dias (ajusta dia 31 para último dia válido do mês);
-  - [ ] Construir componentes de interface React para Fixos (lista de modelos, toggle de ativo/inativo e modal de cadastro).
+  - [x] Construir componentes de interface React para Fixos (lista de modelos em cards Obsidian, toggle de ativo/inativo, resumo projetado e modal de cadastro/edição).
 * **Critérios de pronto:** Modelos recorrentes cadastráveis e geração automática de lançamentos operando de forma autônoma e sincronizada.
-* **Arquivos e pastas alterados:** `app/controllers/recorrentes_controller.py`, `app/services/` ou `app/models/`, `app/static/js/`.
+* **Arquivos e pastas alterados:** `app/controllers/recorrentes_controller.py`, `app/controllers/__init__.py`, `app/__init__.py`, `app/services/recorrentes_service.py`, `app/controllers/lancamentos_controller.py`, `app/static/css/style.css`, `app/static/js/app.js`, `tests/test_fase9_recorrentes.py`.
 * **Dependências:** Fase 8 concluída.
 
 ---

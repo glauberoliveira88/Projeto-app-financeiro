@@ -2880,17 +2880,855 @@ function TelaCategorias() {
   );
 }
 
+// ==============================================================================
+// Componente: Tela de Lançamentos Recorrentes (Fase 9 - Fixos)
+// ==============================================================================
 function TelaRecorrentes() {
+  const [recorrentes, setRecorrentes] = React.useState([]);
+  const [contas, setContas] = React.useState([]);
+  const [categorias, setCategorias] = React.useState([]);
+  const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState('');
+  const [mensagemSucesso, setMensagemSucesso] = React.useState('');
+  const [filtroTipo, setFiltroTipo] = React.useState('todos');
+  const [filtroStatus, setFiltroStatus] = React.useState('todos');
+  const [busca, setBusca] = React.useState('');
+
+  // Estados do Modal de Criação / Edição
+  const [modalAberto, setModalAberto] = React.useState(false);
+  const [recorrenteEmEdicao, setRecorrenteEmEdicao] = React.useState(null);
+  const [abaModal, setAbaModal] = React.useState('despesa'); // 'despesa' | 'receita'
+  const [formDescricao, setFormDescricao] = React.useState('');
+  const [formValor, setFormValor] = React.useState('0,00');
+  const [formDiaVencimento, setFormDiaVencimento] = React.useState(10);
+  const [formCategoriaId, setFormCategoriaId] = React.useState('');
+  const [formContaId, setFormContaId] = React.useState('');
+  const [formFormaPagamento, setFormFormaPagamento] = React.useState('PIX');
+  const [formAtivo, setFormAtivo] = React.useState(true);
+  const [salvando, setSalvando] = React.useState(false);
+  const [erroModal, setErroModal] = React.useState('');
+
+  // Modal de Exclusão
+  const [modalExcluirAberto, setModalExcluirAberto] = React.useState(false);
+  const [recorrenteParaExcluir, setRecorrenteParaExcluir] = React.useState(null);
+  const [excluindo, setExcluindo] = React.useState(false);
+
+  // Sincronização manual
+  const [sincronizando, setSincronizando] = React.useState(false);
+
+  const exibirSucesso = (msg) => {
+    setMensagemSucesso(msg);
+    setTimeout(() => setMensagemSucesso(''), 4000);
+  };
+
+  // Carrega dados iniciais
+  const carregarDados = async () => {
+    setCarregando(true);
+    setErro('');
+    try {
+      const [resRecorrentes, resContas, resCategorias] = await Promise.all([
+        window.api.get('/api/recorrentes'),
+        window.api.get('/api/contas'),
+        window.api.get('/api/categorias'),
+      ]);
+
+      if (resRecorrentes && resRecorrentes.sucesso) {
+        setRecorrentes(resRecorrentes.dados.recorrentes);
+      }
+      if (resContas && resContas.sucesso) {
+        setContas(resContas.dados.contas || []);
+      }
+      if (resCategorias && resCategorias.sucesso) {
+        setCategorias(resCategorias.dados.categorias || []);
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao carregar dados dos lançamentos fixos.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  React.useEffect(() => {
+    carregarDados();
+  }, []);
+
+  // Formatação e steppers monetários
+  const parseValorNumerico = (texto) => {
+    if (!texto) return 0;
+    const limpo = String(texto).replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(limpo);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const formatarValorString = (num) => {
+    return Number(num || 0).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const handleValorChange = (e) => {
+    let digits = e.target.value.replace(/\D/g, '');
+    if (!digits) {
+      setFormValor('0,00');
+      return;
+    }
+    const num = parseInt(digits, 10) / 100;
+    setFormValor(formatarValorString(num));
+  };
+
+  const ajustarValorStepper = (delta) => {
+    const atual = parseValorNumerico(formValor);
+    const novo = Math.max(0, atual + delta);
+    setFormValor(formatarValorString(novo));
+  };
+
+  const ajustarDiaStepper = (delta) => {
+    setFormDiaVencimento((prev) => {
+      const n = Number(prev) || 1;
+      const novo = n + delta;
+      if (novo < 1) return 1;
+      if (novo > 31) return 31;
+      return novo;
+    });
+  };
+
+  // Abertura do modal de criação
+  const abrirModalCriacao = (tipoInicial = 'despesa') => {
+    setRecorrenteEmEdicao(null);
+    setAbaModal(tipoInicial);
+    setFormDescricao('');
+    setFormValor('0,00');
+    setFormDiaVencimento(10);
+    setFormFormaPagamento('PIX');
+    setFormAtivo(true);
+    setErroModal('');
+
+    const contasAtivas = contas.filter(c => c.status === 'ativo');
+    if (contasAtivas.length > 0) {
+      setFormContaId(contasAtivas[0].id);
+    } else {
+      setFormContaId('');
+    }
+
+    const catsDoTipo = categorias.filter(c => c.tipo === tipoInicial && c.status === 'ativo');
+    if (catsDoTipo.length > 0) {
+      setFormCategoriaId(catsDoTipo[0].id);
+    } else {
+      setFormCategoriaId('');
+    }
+
+    setModalAberto(true);
+  };
+
+  // Alterna aba no modal
+  const mudarAbaModal = (novaAba) => {
+    setAbaModal(novaAba);
+    setErroModal('');
+    const cats = categorias.filter(c => c.tipo === novaAba && c.status === 'ativo');
+    if (cats.length > 0 && (!formCategoriaId || !cats.some(c => c.id === Number(formCategoriaId)))) {
+      setFormCategoriaId(cats[0].id);
+    }
+  };
+
+  // Abertura do modal de edição
+  const abrirModalEdicao = (modelo) => {
+    setRecorrenteEmEdicao(modelo);
+    setAbaModal(modelo.tipo);
+    setFormDescricao(modelo.descricao || '');
+    setFormValor(formatarValorString(modelo.valor));
+    setFormDiaVencimento(modelo.dia_vencimento || 10);
+    setFormCategoriaId(modelo.categoria_id ? String(modelo.categoria_id) : '');
+    setFormContaId(modelo.conta_id ? String(modelo.conta_id) : '');
+    setFormFormaPagamento(modelo.forma_pagamento || 'PIX');
+    setFormAtivo(modelo.ativo);
+    setErroModal('');
+    setModalAberto(true);
+  };
+
+  const fecharModal = () => {
+    setModalAberto(false);
+    setRecorrenteEmEdicao(null);
+    setErroModal('');
+  };
+
+  // Salvar criação ou edição
+  const handleSalvar = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setErroModal('');
+    setSalvando(true);
+
+    const valorNumerico = parseValorNumerico(formValor);
+    if (valorNumerico <= 0) {
+      setErroModal('O valor deve ser estritamente maior que zero.');
+      setSalvando(false);
+      return;
+    }
+
+    if (!formDescricao.trim() || formDescricao.trim().length < 2) {
+      setErroModal('A descrição deve ter entre 2 e 150 caracteres.');
+      setSalvando(false);
+      return;
+    }
+
+    const diaNum = Number(formDiaVencimento);
+    if (isNaN(diaNum) || diaNum < 1 || diaNum > 31) {
+      setErroModal('O dia de vencimento deve estar entre 1 e 31.');
+      setSalvando(false);
+      return;
+    }
+
+    if (!formCategoriaId) {
+      setErroModal('Selecione uma categoria compatível.');
+      setSalvando(false);
+      return;
+    }
+
+    if (!formContaId) {
+      setErroModal('Selecione a conta/carteira preferencial.');
+      setSalvando(false);
+      return;
+    }
+
+    const payload = {
+      tipo: abaModal,
+      descricao: formDescricao.trim(),
+      valor: valorNumerico,
+      dia_vencimento: diaNum,
+      categoria_id: Number(formCategoriaId),
+      conta_id: Number(formContaId),
+      forma_pagamento: formFormaPagamento,
+      ativo: Boolean(formAtivo),
+    };
+
+    try {
+      let res;
+      if (recorrenteEmEdicao) {
+        res = await window.api.put(`/api/recorrentes/${recorrenteEmEdicao.id}`, payload);
+      } else {
+        res = await window.api.post('/api/recorrentes', payload);
+      }
+
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Lançamento recorrente salvo com sucesso.');
+        fecharModal();
+        carregarDados();
+      } else {
+        setErroModal((res && res.erro) || 'Não foi possível salvar o fixo recorrente.');
+      }
+    } catch (err) {
+      setErroModal(err.message || 'Erro inesperado ao salvar.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  // Alternar rapidamente status Ativo <-> Pausado
+  const handleAlternarStatus = async (modelo) => {
+    try {
+      const res = await window.api.patch(`/api/recorrentes/${modelo.id}/toggle`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem);
+        setRecorrentes((prev) =>
+          prev.map((item) =>
+            item.id === modelo.id ? { ...item, ativo: res.dados.recorrente.ativo } : item
+          )
+        );
+      } else {
+        setErro((res && res.erro) || 'Erro ao alternar status do lançamento recorrente.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao alternar status.');
+    }
+  };
+
+  // Abertura do modal de confirmação de exclusão
+  const handleConfirmarExcluir = (modelo) => {
+    setRecorrenteParaExcluir(modelo);
+    setModalExcluirAberto(true);
+  };
+
+  const handleExcluir = async () => {
+    if (!recorrenteParaExcluir) return;
+    setExcluindo(true);
+    try {
+      const res = await window.api.delete(`/api/recorrentes/${recorrenteParaExcluir.id}`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Lançamento recorrente excluído.');
+        setModalExcluirAberto(false);
+        setRecorrenteParaExcluir(null);
+        carregarDados();
+      } else {
+        setErro((res && res.erro) || 'Erro ao excluir.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao excluir lançamento recorrente.');
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
+  // Sincronização manual transparente
+  const handleSincronizarManual = async () => {
+    setSincronizando(true);
+    setErro('');
+    try {
+      const res = await window.api.post('/api/recorrentes/sincronizar');
+      if (res && res.sucesso) {
+        const total = res.dados.gerados_total;
+        if (total > 0) {
+          exibirSucesso(`Sincronização concluída: ${total} novo(s) lançamento(s) gerado(s) para este mês!`);
+        } else {
+          exibirSucesso('Todos os fixos ativos já estavam sincronizados para o ciclo vigente.');
+        }
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao sincronizar fixos recorrentes.');
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
+  // Cálculos de resumo
+  const totalDespesasFixas = recorrentes
+    .filter((r) => r.ativo && r.tipo === 'despesa')
+    .reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+
+  const totalReceitasFixas = recorrentes
+    .filter((r) => r.ativo && r.tipo === 'receita')
+    .reduce((acc, r) => acc + (Number(r.valor) || 0), 0);
+
+  const saldoProjetado = totalReceitasFixas - totalDespesasFixas;
+
+  // Filtragem da lista
+  const itensFiltrados = recorrentes.filter((item) => {
+    if (filtroTipo !== 'todos' && item.tipo !== filtroTipo) return false;
+    if (filtroStatus === 'ativos' && !item.ativo) return false;
+    if (filtroStatus === 'pausados' && item.ativo) return false;
+    if (busca.trim()) {
+      const termo = busca.toLowerCase();
+      const bateDesc = (item.descricao || '').toLowerCase().includes(termo);
+      const bateCat = (item.categoria_nome || '').toLowerCase().includes(termo);
+      const bateConta = (item.conta_nome || '').toLowerCase().includes(termo);
+      if (!bateDesc && !bateCat && !bateConta) return false;
+    }
+    return true;
+  });
+
+  const categoriasDoTipo = categorias.filter(
+    (c) => c.tipo === abaModal && c.status === 'ativo'
+  );
+  const contasAtivas = contas.filter((c) => c.status === 'ativo');
+
   return (
     <div className="module-container">
+      {/* Cabeçalho do Módulo */}
       <div className="module-header">
-        <div><h2 className="module-title">Fixos Recorrentes</h2></div>
+        <div>
+          <h2 className="module-title">Fixos Recorrentes</h2>
+          <p className="module-subtitle">
+            Automatize suas despesas e receitas mensais. Na virada do ciclo, lançamentos são gerados com status pendente.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleSincronizarManual}
+            disabled={sincronizando || carregando}
+            title="Verifica e gera lançamentos pendentes no mês atual"
+          >
+            {sincronizando ? 'Sincronizando...' : '🔁 Sincronizar Agora'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => abrirModalCriacao('despesa')}
+          >
+            + Novo Fixo
+          </button>
+        </div>
       </div>
-      <div className="empty-state">
-        <div className="empty-icon">🔁</div>
-        <p className="empty-title">Módulo em construção</p>
-        <p className="empty-subtitle">Será implementado na Fase 9.</p>
+
+      {mensagemSucesso && (
+        <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
+          {mensagemSucesso}
+        </div>
+      )}
+
+      {erro && (
+        <div className="alert alert-error" style={{ marginBottom: '1.25rem' }}>
+          {erro}
+        </div>
+      )}
+
+      {/* Cartões de Indicadores de Fixos */}
+      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Despesas Fixas / Mês</span>
+            <span className="metric-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)' }}>
+              ↑ Fixos
+            </span>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--text-primary)' }}>
+            {formatarMoeda(totalDespesasFixas)}
+          </div>
+          <div className="metric-subtext">Comprometimento mensal fixo ativo</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Receitas Fixas / Mês</span>
+            <span className="metric-badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: 'var(--tertiary)' }}>
+              ↓ Fixos
+            </span>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--tertiary)' }}>
+            {formatarMoeda(totalReceitasFixas)}
+          </div>
+          <div className="metric-subtext">Entradas mensais certas (salário, etc.)</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Balanço Fixo Projetado</span>
+            <span className="metric-badge" style={{ background: 'var(--surface-active)', color: 'var(--text-secondary)' }}>
+              Saldo Base
+            </span>
+          </div>
+          <div
+            className="metric-value"
+            style={{ color: saldoProjetado >= 0 ? 'var(--tertiary)' : 'var(--error)' }}
+          >
+            {formatarMoeda(saldoProjetado)}
+          </div>
+          <div className="metric-subtext">Sobra fixa antes de gastos avulsos</div>
+        </div>
       </div>
+
+      {/* Linha de Filtros e Busca */}
+      <div className="lancamentos-filters-row" style={{ marginBottom: '1.25rem' }}>
+        <div className="lancamentos-search-box">
+          <span className="lancamentos-search-icon">🔍</span>
+          <input
+            type="text"
+            className="form-input lancamentos-search-input"
+            placeholder="Buscar por descrição, categoria ou conta..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+
+        <select
+          className="form-select"
+          value={filtroTipo}
+          onChange={(e) => setFiltroTipo(e.target.value)}
+        >
+          <option value="todos">Todos os tipos</option>
+          <option value="despesa">Apenas Despesas</option>
+          <option value="receita">Apenas Receitas</option>
+        </select>
+
+        <select
+          className="form-select"
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+        >
+          <option value="todos">Todos os status</option>
+          <option value="ativos">Apenas Ativos</option>
+          <option value="pausados">Apenas Pausados</option>
+        </select>
+      </div>
+
+      {/* Listagem em Cards de Fixos */}
+      {carregando ? (
+        <div className="empty-state">
+          <p className="empty-title">Carregando fixos recorrentes...</p>
+        </div>
+      ) : itensFiltrados.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">🔁</div>
+          <p className="empty-title">Nenhum lançamento fixo encontrado</p>
+          <p className="empty-subtitle">
+            Cadastre aluguel, luz, internet, assinaturas ou salários para automatizar a geração de lançamentos a cada mês.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => abrirModalCriacao('despesa')}
+          >
+            + Criar Primeiro Fixo
+          </button>
+        </div>
+      ) : (
+        <div className="recorrentes-grid">
+          {itensFiltrados.map((item) => {
+            const isReceita = item.tipo === 'receita';
+            return (
+              <div
+                key={item.id}
+                className={`recorrente-card ${!item.ativo ? 'pausado' : ''}`}
+              >
+                <div>
+                  <div className="recorrente-card-header">
+                    <div>
+                      <div className="recorrente-card-title">{item.descricao}</div>
+                      <div className="recorrente-card-meta">
+                        <span className={`tipo-badge tipo-badge-${item.tipo}`}>
+                          {isReceita ? '↓ Receita' : '↑ Despesa'}
+                        </span>
+                        <span>•</span>
+                        <span>{item.categoria_nome || 'Sem categoria'}</span>
+                      </div>
+                    </div>
+                    <span className="recorrente-dia-badge">
+                      📅 Dia {item.dia_vencimento}
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <div className={`recorrente-card-valor ${item.tipo}`}>
+                      {isReceita ? '+' : '-'} {formatarMoeda(item.valor)}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Conta: <strong>{item.conta_nome || '-'}</strong> • Via {item.forma_pagamento || 'PIX'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="recorrente-card-footer">
+                  <button
+                    type="button"
+                    className={`toggle-switch-btn ${item.ativo ? 'ativo' : 'pausado'}`}
+                    onClick={() => handleAlternarStatus(item)}
+                    title={item.ativo ? 'Clique para pausar geração' : 'Clique para ativar geração'}
+                  >
+                    <span>{item.ativo ? '●' : '○'}</span>
+                    <span>{item.ativo ? 'Ativo' : 'Pausado'}</span>
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => abrirModalEdicao(item)}
+                      title="Editar parâmetros do fixo"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm btn-danger"
+                      onClick={() => handleConfirmarExcluir(item)}
+                      title="Excluir fixo recorrente"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal de Criação / Edição de Fixo Recorrente */}
+      {modalAberto && (
+        <Modal
+          titulo={
+            recorrenteEmEdicao
+              ? `Editar Fixo: ${recorrenteEmEdicao.descricao}`
+              : 'Novo Lançamento Fixo (Recorrente)'
+          }
+          onFechar={fecharModal}
+        >
+          {/* Abas no topo (apenas ao criar novo) */}
+          {!recorrenteEmEdicao && (
+            <div className="modal-tabs">
+              <button
+                type="button"
+                className={`modal-tab-btn tab-despesa ${abaModal === 'despesa' ? 'active' : ''}`}
+                onClick={() => mudarAbaModal('despesa')}
+              >
+                ↑ Despesa Fixa
+              </button>
+              <button
+                type="button"
+                className={`modal-tab-btn tab-receita ${abaModal === 'receita' ? 'active' : ''}`}
+                onClick={() => mudarAbaModal('receita')}
+              >
+                ↓ Receita Fixa
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSalvar}>
+            {erroModal && <div className="alert alert-error">{erroModal}</div>}
+
+            {/* Campo Monetário com Prefixo R$ e Steppers de R$ 1,00 */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="rec-valor">
+                Valor Previsto (R$)
+              </label>
+              <div className="input-moeda-wrapper">
+                <span className="input-moeda-prefixo">R$</span>
+                <input
+                  id="rec-valor"
+                  type="text"
+                  required
+                  inputMode="numeric"
+                  className="form-input input-moeda-field"
+                  placeholder="0,00"
+                  value={formValor}
+                  onChange={handleValorChange}
+                  disabled={salvando}
+                  autoFocus
+                />
+                <div className="input-moeda-steppers">
+                  <button
+                    type="button"
+                    className="input-moeda-stepper-btn"
+                    onClick={() => ajustarValorStepper(1)}
+                    disabled={salvando}
+                    title="Aumentar R$ 1,00"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    className="input-moeda-stepper-btn"
+                    onClick={() => ajustarValorStepper(-1)}
+                    disabled={salvando}
+                    title="Diminuir R$ 1,00"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Descrição */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="rec-descricao">
+                Descrição do Fixo
+              </label>
+              <input
+                id="rec-descricao"
+                type="text"
+                required
+                maxLength={150}
+                className="form-input"
+                placeholder={
+                  abaModal === 'despesa'
+                    ? 'Ex: Aluguel, Internet fibra, Academia...'
+                    : 'Ex: Salário mensal, Rendimento fixo...'
+                }
+                value={formDescricao}
+                onChange={(e) => setFormDescricao(e.target.value)}
+                disabled={salvando}
+              />
+            </div>
+
+            {/* Dia de Vencimento (1 a 31) com Steppers */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="rec-dia">
+                Dia de Vencimento Padrão no Mês (1 a 31)
+              </label>
+              <div className="dia-stepper-container">
+                <input
+                  id="rec-dia"
+                  type="number"
+                  min="1"
+                  max="31"
+                  required
+                  className="form-input dia-input"
+                  value={formDiaVencimento}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) {
+                      setFormDiaVencimento(Math.min(31, Math.max(1, v)));
+                    } else {
+                      setFormDiaVencimento('');
+                    }
+                  }}
+                  disabled={salvando}
+                />
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => ajustarDiaStepper(1)}
+                    disabled={salvando || formDiaVencimento >= 31}
+                    title="Aumentar dia"
+                  >
+                    ▲ +1 dia
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => ajustarDiaStepper(-1)}
+                    disabled={salvando || formDiaVencimento <= 1}
+                    title="Diminuir dia"
+                  >
+                    ▼ -1 dia
+                  </button>
+                </div>
+              </div>
+              <span className="form-helper">
+                Em meses com menos dias (como fevereiro ou meses de 30 dias), o vencimento é ajustado automaticamente para o último dia válido.
+              </span>
+            </div>
+
+            {/* Categoria e Conta */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="rec-categoria">
+                  Categoria
+                </label>
+                <select
+                  id="rec-categoria"
+                  className="form-select"
+                  value={formCategoriaId}
+                  onChange={(e) => setFormCategoriaId(e.target.value)}
+                  disabled={salvando}
+                  required
+                >
+                  <option value="">Selecione...</option>
+                  {categoriasDoTipo.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="rec-conta">
+                  Conta / Carteira
+                </label>
+                <select
+                  id="rec-conta"
+                  className="form-select"
+                  value={formContaId}
+                  onChange={(e) => setFormContaId(e.target.value)}
+                  disabled={salvando}
+                  required
+                >
+                  <option value="">Selecione...</option>
+                  {contasAtivas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Forma de Pagamento */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="rec-pagamento">
+                Forma de Pagamento Padrão
+              </label>
+              <select
+                id="rec-pagamento"
+                className="form-select"
+                value={formFormaPagamento}
+                onChange={(e) => setFormFormaPagamento(e.target.value)}
+                disabled={salvando}
+              >
+                <option value="PIX">PIX</option>
+                <option value="Boleto">Boleto</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Transferência">Transferência</option>
+              </select>
+            </div>
+
+            {/* Ativo Checkbox */}
+            <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0 1.25rem 0' }}>
+              <input
+                id="rec-ativo"
+                type="checkbox"
+                checked={formAtivo}
+                onChange={(e) => setFormAtivo(e.target.checked)}
+                disabled={salvando}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <label htmlFor="rec-ativo" style={{ fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
+                Modelo ativo para geração automática de lançamentos mensais
+              </label>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={fecharModal}
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={salvando}>
+                {salvando
+                  ? 'Salvando...'
+                  : recorrenteEmEdicao
+                  ? 'Salvar Alterações'
+                  : 'Criar Lançamento Fixo'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {modalExcluirAberto && recorrenteParaExcluir && (
+        <Modal
+          titulo="Excluir Lançamento Fixo"
+          onFechar={() => {
+            if (!excluindo) {
+              setModalExcluirAberto(false);
+              setRecorrenteParaExcluir(null);
+            }
+          }}
+        >
+          <div className="modal-warning-box">
+            <div className="modal-warning-title">⚠️ Atenção: Exclusão do Modelo</div>
+            <p style={{ margin: '0 0 0.5rem 0' }}>
+              Tem certeza de que deseja excluir o modelo de fixo{' '}
+              <strong>"{recorrenteParaExcluir.descricao}"</strong> (
+              {formatarMoeda(recorrenteParaExcluir.valor)})?
+            </p>
+            <p style={{ margin: 0 }}>
+              Os lançamentos já gerados a partir dele em meses anteriores permanecerão intactos no seu histórico contábil. Apenas a geração automática para os próximos ciclos será interrompida.
+            </p>
+          </div>
+
+          <div className="modal-footer" style={{ marginTop: '1.25rem' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                setModalExcluirAberto(false);
+                setRecorrenteParaExcluir(null);
+              }}
+              disabled={excluindo}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-danger"
+              onClick={handleExcluir}
+              disabled={excluindo}
+            >
+              {excluindo ? 'Excluindo...' : 'Confirmar Exclusão'}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

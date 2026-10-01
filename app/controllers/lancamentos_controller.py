@@ -50,6 +50,22 @@ def listar_lancamentos():
     """
     usuario_id = current_user.id
 
+    # 1. Filtro por Ano e Mês de Competência
+    mes = request.args.get("mes", type=int)
+    ano = request.args.get("ano", type=int)
+
+    # Sincronização automática transparente de lançamentos recorrentes (docs/FSD.md - Seção 6.4 e 13.4)
+    try:
+        from app.services.recorrentes_service import sincronizar_recorrencias_usuario
+        hoje = date.today()
+        ano_sinc = ano or hoje.year
+        mes_sinc = mes or hoje.month
+        sincronizar_recorrencias_usuario(usuario_id=usuario_id, ano=ano_sinc, mes=mes_sinc)
+        if (ano_sinc, mes_sinc) != (hoje.year, hoje.month):
+            sincronizar_recorrencias_usuario(usuario_id=usuario_id, ano=hoje.year, mes=hoje.month)
+    except Exception:
+        pass  # Falha silenciosa para não travar a listagem caso ocorra instabilidade temporária
+
     # Base query: lançamentos do usuário que não foram excluídos logicamente
     query = (
         Lancamento.query
@@ -58,10 +74,6 @@ def listar_lancamentos():
             Lancamento.deleted_at.is_(None),
         )
     )
-
-    # 1. Filtro por Ano e Mês de Competência
-    mes = request.args.get("mes", type=int)
-    ano = request.args.get("ano", type=int)
     if ano:
         query = query.filter(extract("year", Lancamento.data_competencia) == ano)
     if mes:
