@@ -49,12 +49,13 @@ def create_app(config_class=Config):
         obter_usuario_atual()
 
     # 6. Registro de Blueprints / Controllers
-    from app.controllers import auth_bp, contas_bp, categorias_bp, lancamentos_bp, recorrentes_bp
+    from app.controllers import auth_bp, contas_bp, categorias_bp, lancamentos_bp, recorrentes_bp, dashboard_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(contas_bp)
     app.register_blueprint(categorias_bp)
     app.register_blueprint(lancamentos_bp)
     app.register_blueprint(recorrentes_bp)
+    app.register_blueprint(dashboard_bp)
 
     # Rota raiz servindo o shell da aplicação
     @app.route("/", methods=["GET"])

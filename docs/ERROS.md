@@ -99,3 +99,10 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
 - **Causa:** Definição da classe `.recorrentes-kpi-value.saldo-zero` com valor estático `#ffffff` sem declarar a variação correspondente para o tema claro sob `[data-theme="light"]`.
 - **Solução aplicada:** Adicionado seletor de tema claro `[data-theme="light"] .recorrentes-kpi-value.saldo-zero, body.light-theme .recorrentes-kpi-value.saldo-zero { color: #09090b; }`, garantindo texto preto no tema claro e preservando a cor branca no tema escuro.
 - **Como evitar no futuro:** Sempre validar os dois modos de exibição (escuro e claro) ao aplicar cores literais em elementos tipográficos, assegurando a compatibilidade de contraste por meio das variáveis ou regras condicionais de tema.
+
+## 2026-10-06 - Divergência de nomes de método e atributo em modelos (calcular_saldo vs calcular_saldo_atual e conta vs conta_origem) no Dashboard
+
+- **Sintoma:** Endpoint `GET /api/dashboard/resumo` retornava erro HTTP 500 no carregamento de métricas e alertas.
+- **Causa:** O controller acessava `c.calcular_saldo()` em vez de `c.calcular_saldo_atual()` no modelo `Conta`, e tentava acessar o relacionamento direto `item.conta` em vez de `item.conta_origem` no modelo `Lancamento`.
+- **Solução aplicada:** Substituição da invocação por `c.calcular_saldo_atual()` e do relacionamento por `item.conta_origem.nome if item.conta_origem else "-"`.
+- **Como evitar no futuro:** Sempre inspecionar a definição precisa dos métodos e relacionamentos mapeados nos arquivos em `app/models/` antes de chamá-los nos controllers.

@@ -202,17 +202,17 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Consolidar os indicadores em tempo real, implementar o gráfico monocromático de despesas por categoria e o bloco de alertas visuais para contas a vencer e vencidas.
 * **Checklist de tarefas:**
-  - [ ] Criar `app/controllers/dashboard_controller.py`:
+  - [x] Criar `app/controllers/dashboard_controller.py`:
     - `GET /api/dashboard/resumo` (parâmetros de mês e ano; cálculo de saldo líquido, total de receitas, total de despesas, agregação por categoria e lista de alertas de vencimento);
-  - [ ] Construir componentes de interface React para Dashboard:
+  - [x] Construir componentes de interface React para Dashboard:
     - Barra de navegação de períodos mensais (com setas de avançar/voltar e seletor rápido);
-    - Cartões de indicadores (Saldo Líquido com cor verde/vermelha funcional, Receitas e Despesas);
+    - Cartões de indicadores (Saldo Líquido com cor verde/vermelha funcional, Receitas, Despesas e Saldo Total em Contas);
     - Gráfico de barras simples, elegante e monocromático em tons de violeta e zinc;
-    - Bloco de alertas com destaque vermelho (`#ef4444`) para atrasos e botão rápido "Marcar como Pago";
-    - Botão flutuante "+ Novo Lançamento" com atalho direto ao modal;
+    - Bloco de alertas com destaque vermelho (`#ef4444`) para atrasos e botão rápido "✓ Pagar";
+    - Botão flutuante/cabeçalho "+ Novo Lançamento" com atalho direto ao modal;
     - Skeleton loaders e estados vazios amigáveis.
 * **Critérios de pronto:** Dashboard renderiza métricas em milissegundos, recalcula instantaneamente ao alternar meses e dispara automação de recorrências.
-* **Arquivos e pastas alterados:** `app/controllers/dashboard_controller.py`, `app/static/js/`.
+* **Arquivos e pastas alterados:** `app/controllers/dashboard_controller.py`, `app/controllers/__init__.py`, `app/__init__.py`, `app/static/css/style.css`, `app/static/js/app.js`, `tests/test_fase10_dashboard.py`.
 * **Dependências:** Fase 8 e Fase 9 concluídas.
 
 ---

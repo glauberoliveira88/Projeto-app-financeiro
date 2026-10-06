@@ -1,10 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-06 (Calibração de contraste do balanço fixo neutro no tema claro e escuro)
-* **Fase atual:** Fase 9 concluída — Módulo de Lançamentos Recorrentes
-* **Próximo passo recomendado:** Iniciar a Fase 10 (Módulo do Painel Principal - Dashboard, Gráficos Monocromáticos e Alertas)
-
-
+* **Última atualização:** 2026-10-06 (Conclusão da Fase 10 — Módulo do Painel Principal - Dashboard)
+* **Fase atual:** Fase 10 concluída — Módulo do Painel Principal (Dashboard)
+* **Próximo passo recomendado:** Iniciar a Fase 11 (Módulo de Configurações, Perfil e Alternância de Tema)
 
 ---
 
@@ -21,7 +19,7 @@
 | **Fase 7** | Módulo de Categorias e Orçamentos (Provisionamento Canônico e Reatribuição) | **Concluída** |
 | **Fase 8** | Módulo de Lançamentos (Receitas, Despesas, Transferências e Soft Delete) | **Concluída** |
 | **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | **Concluída** |
-| **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | Pendente |
+| **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | **Concluída** |
 | **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | Pendente |
 | **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | Pendente |
 
@@ -122,9 +120,10 @@
 ---
 
 ### Fase 10 — Módulo do Painel Principal (Dashboard)
-- [ ] Implementar `app/controllers/dashboard_controller.py` com consolidação de métricas mensais;
-- [ ] Construir componentes React do Dashboard (cards de saldo, gráfico monocromático de despesas e bloco de alertas com botão rápido de quitação);
-- [ ] Adicionar navegação histórica livre entre períodos mensais.
+- [x] Implementar `app/controllers/dashboard_controller.py` com o endpoint `GET /api/dashboard/resumo` consolidando métricas do período (Saldo Líquido, Total de Receitas, Total de Despesas, Saldo Consolidado em Contas e disparo autônomo de recorrências);
+- [x] Construir componentes React do Dashboard (`TelaDashboard`, navegação mensal livre, cards de KPIs com cores semânticas, gráfico monocromático de despesas por categoria e bloco de alertas de vencimento com ação rápida de liquidação);
+- [x] Integrar atalho rápido "+ Novo Lançamento" no cabeçalho com modal de movimentações;
+- [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase10_dashboard.py`).
 
 ---
 

@@ -1027,22 +1027,887 @@ function TelaContas() {
 }
 
 // ==============================================================================
-// Componente: Páginas de Módulos Futuros (placeholder)
+// ==============================================================================
+// Componente: Tela de Dashboard / Painel Principal (Fase 10)
 // ==============================================================================
 function TelaDashboard() {
+  const dataHoje = new Date();
+  const [mes, setMes] = React.useState(dataHoje.getMonth() + 1);
+  const [ano, setAno] = React.useState(dataHoje.getFullYear());
+
+  const [dados, setDados] = React.useState(null);
+  const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState('');
+  const [mensagemSucesso, setMensagemSucesso] = React.useState('');
+  const [quitandoId, setQuitandoId] = React.useState(null);
+
+  // Estados para o Modal de Novo Lançamento Rápido no Dashboard
+  const [modalAberto, setModalAberto] = React.useState(false);
+  const [abaModal, setAbaModal] = React.useState('despesa'); // 'despesa', 'receita', 'transferencia'
+  const [formValor, setFormValor] = React.useState('0,00');
+  const [formDataCompetencia, setFormDataCompetencia] = React.useState('');
+  const [formDataVencimento, setFormDataVencimento] = React.useState('');
+  const [formDescricao, setFormDescricao] = React.useState('');
+  const [formCategoriaId, setFormCategoriaId] = React.useState('');
+  const [formContaId, setFormContaId] = React.useState('');
+  const [formContaDestinoId, setFormContaDestinoId] = React.useState('');
+  const [formFormaPagamento, setFormFormaPagamento] = React.useState('PIX');
+  const [formStatus, setFormStatus] = React.useState('pago');
+  const [formObservacao, setFormObservacao] = React.useState('');
+  const [salvando, setSalvando] = React.useState(false);
+  const [erroModal, setErroModal] = React.useState('');
+  const [avisoSaldoInsuficiente, setAvisoSaldoInsuficiente] = React.useState('');
+
+  const [contas, setContas] = React.useState([]);
+  const [categorias, setCategorias] = React.useState([]);
+
+  const nomesMeses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const exibirSucesso = (msg) => {
+    setMensagemSucesso(msg);
+    setTimeout(() => setMensagemSucesso(''), 4000);
+  };
+
+  // Carrega os dados consolidados do dashboard
+  const carregarDashboard = async () => {
+    setCarregando(true);
+    setErro('');
+    try {
+      const res = await window.api.get(`/api/dashboard/resumo?mes=${mes}&ano=${ano}`);
+      if (res && res.sucesso && res.dados) {
+        setDados(res.dados);
+      } else {
+        setErro((res && res.erro) || 'Não foi possível carregar os dados do painel.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro de comunicação ao carregar o painel.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Carrega contas e categorias para o modal de novo lançamento
+  const carregarMetadados = async () => {
+    try {
+      const [resContas, resCategorias] = await Promise.all([
+        window.api.get('/api/contas'),
+        window.api.get('/api/categorias'),
+      ]);
+      if (resContas && resContas.sucesso) {
+        setContas(resContas.dados.contas || []);
+      }
+      if (resCategorias && resCategorias.sucesso) {
+        setCategorias(resCategorias.dados.categorias || []);
+      }
+    } catch {
+      // Metadados auxiliares opcionais
+    }
+  };
+
+  React.useEffect(() => {
+    carregarDashboard();
+  }, [mes, ano]);
+
+  React.useEffect(() => {
+    carregarMetadados();
+  }, []);
+
+  // Navegação entre meses
+  const mesAnterior = () => {
+    if (mes === 1) {
+      setMes(12);
+      setAno(ano - 1);
+    } else {
+      setMes(mes - 1);
+    }
+  };
+
+  const mesSeguinte = () => {
+    if (mes === 12) {
+      setMes(1);
+      setAno(ano + 1);
+    } else {
+      setMes(mes + 1);
+    }
+  };
+
+  const mesAtual = () => {
+    const agora = new Date();
+    setMes(agora.getMonth() + 1);
+    setAno(agora.getFullYear());
+  };
+
+  // Quitação rápida de alerta pendente
+  const marcarComoPago = async (alerta) => {
+    setQuitandoId(alerta.id);
+    try {
+      const res = await window.api.patch(`/api/lancamentos/${alerta.id}/pagar`);
+      if (res && res.sucesso) {
+        exibirSucesso(`"${alerta.descricao}" marcada como paga com sucesso!`);
+        carregarDashboard();
+      } else {
+        setErro((res && res.erro) || 'Não foi possível atualizar o status do lançamento.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao processar quitação rápida.');
+    } finally {
+      setQuitandoId(null);
+    }
+  };
+
+  // Abertura do modal de novo lançamento
+  const abrirNovoLancamento = (tipo = 'despesa') => {
+    const hojeStr = new Date().toISOString().split('T')[0];
+    setAbaModal(tipo);
+    setFormValor('0,00');
+    setFormDataCompetencia(hojeStr);
+    setFormDataVencimento(hojeStr);
+    setFormDescricao('');
+    setFormFormaPagamento('PIX');
+    setFormStatus('pago');
+    setFormObservacao('');
+    setErroModal('');
+    setAvisoSaldoInsuficiente('');
+
+    // Preenche conta padrão
+    const contaAtiva = contas.find(c => c.status === 'ativo');
+    if (contaAtiva) {
+      setFormContaId(contaAtiva.id.toString());
+    } else {
+      setFormContaId('');
+    }
+
+    // Preenche categoria padrão para o tipo
+    if (tipo !== 'transferencia') {
+      const catValida = categorias.find(c => c.tipo === tipo && c.status === 'ativo');
+      setFormCategoriaId(catValida ? catValida.id.toString() : '');
+    } else {
+      setFormCategoriaId('');
+    }
+
+    setModalAberto(true);
+  };
+
+  const fecharModal = () => {
+    setModalAberto(false);
+    setErroModal('');
+    setAvisoSaldoInsuficiente('');
+  };
+
+  const mudarAbaModal = (novaAba) => {
+    setAbaModal(novaAba);
+    setErroModal('');
+    setAvisoSaldoInsuficiente('');
+    if (novaAba !== 'transferencia') {
+      const catValida = categorias.find(c => c.tipo === novaAba && c.status === 'ativo');
+      setFormCategoriaId(catValida ? catValida.id.toString() : '');
+    } else {
+      setFormCategoriaId('');
+    }
+  };
+
+  // Manipulação de valor com stepper de R$ 1,00
+  const parseValorNumerico = (vStr) => {
+    if (!vStr) return 0;
+    const limpo = vStr.toString().replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(limpo);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const formatarValorString = (num) => {
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const incrementarValor = (delta) => {
+    const atual = parseValorNumerico(formValor);
+    const novo = Math.max(0, atual + delta);
+    setFormValor(formatarValorString(novo));
+  };
+
+  const handleValorChange = (e) => {
+    const digitos = e.target.value.replace(/\D/g, '');
+    if (!digitos) {
+      setFormValor('0,00');
+      return;
+    }
+    const centavos = parseInt(digitos, 10);
+    const reais = (centavos / 100).toFixed(2);
+    setFormValor(formatarValorString(parseFloat(reais)));
+  };
+
+  // Submissão do formulário de novo lançamento
+  const handleSalvar = async (e, forcarTransferencia = false) => {
+    if (e) e.preventDefault();
+    setErroModal('');
+    setSalvando(true);
+
+    const valorNumerico = parseValorNumerico(formValor);
+    if (valorNumerico <= 0) {
+      setErroModal('O valor deve ser maior que zero (R$ 0,00).');
+      setSalvando(false);
+      return;
+    }
+
+    if (!formDataCompetencia) {
+      setErroModal('Informe a data contábil (competência).');
+      setSalvando(false);
+      return;
+    }
+
+    try {
+      if (abaModal === 'transferencia') {
+        if (!formContaId || !formContaDestinoId) {
+          setErroModal('Selecione as contas de origem e de destino.');
+          setSalvando(false);
+          return;
+        }
+        if (formContaId === formContaDestinoId) {
+          setErroModal('A conta de destino deve ser diferente da conta de origem.');
+          setSalvando(false);
+          return;
+        }
+
+        const payload = {
+          valor: valorNumerico,
+          data_competencia: formDataCompetencia,
+          conta_id: Number(formContaId),
+          conta_destino_id: Number(formContaDestinoId),
+          descricao: formDescricao.trim() || undefined,
+          forma_pagamento: formFormaPagamento,
+          observacao: formObservacao.trim() || undefined,
+          confirmar_saldo_negativo: forcarTransferencia,
+        };
+
+        const res = await window.api.post('/api/lancamentos/transferencia', payload);
+        if (res && res.sucesso) {
+          exibirSucesso(res.mensagem || 'Transferência realizada com sucesso.');
+          fecharModal();
+          carregarDashboard();
+        } else if (res && res.requer_confirmacao) {
+          setAvisoSaldoInsuficiente(res.erro);
+        } else {
+          setErroModal((res && res.erro) || 'Erro ao processar transferência.');
+        }
+      } else {
+        if (!formDescricao.trim()) {
+          setErroModal('Informe a descrição do lançamento.');
+          setSalvando(false);
+          return;
+        }
+        if (!formCategoriaId) {
+          setErroModal('Selecione uma categoria.');
+          setSalvando(false);
+          return;
+        }
+        if (!formContaId) {
+          setErroModal('Selecione uma conta bancária ou carteira.');
+          setSalvando(false);
+          return;
+        }
+
+        const payload = {
+          tipo: abaModal,
+          valor: valorNumerico,
+          data_competencia: formDataCompetencia,
+          data_vencimento: formDataVencimento || formDataCompetencia,
+          descricao: formDescricao.trim(),
+          categoria_id: Number(formCategoriaId),
+          conta_id: Number(formContaId),
+          forma_pagamento: formFormaPagamento,
+          status: formStatus,
+          observacao: formObservacao.trim() || undefined,
+        };
+
+        const res = await window.api.post('/api/lancamentos', payload);
+        if (res && res.sucesso) {
+          exibirSucesso('Lançamento cadastrado com sucesso!');
+          fecharModal();
+          carregarDashboard();
+        } else {
+          setErroModal((res && res.erro) || 'Erro ao cadastrar lançamento.');
+        }
+      }
+    } catch (err) {
+      setErroModal(err.message || 'Erro inesperado ao salvar lançamento.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const metricas = dados?.metricas || {
+    saldo_mes: 0,
+    total_receitas: 0,
+    total_receitas_pagas: 0,
+    total_despesas: 0,
+    total_despesas_pagas: 0,
+    saldo_total_contas: 0,
+  };
+
+  const graficoCategorias = dados?.grafico_despesas_categoria || [];
+  const alertasVencidos = dados?.alertas?.vencidos || [];
+  const alertasAVencer = dados?.alertas?.a_vencer || [];
+  const totalAlertas = (dados?.alertas?.total_alertas) || 0;
+
+  const saldoMesClasse = metricas.saldo_mes > 0 ? 'positivo' : metricas.saldo_mes < 0 ? 'negativo' : 'neutro';
+
   return (
     <div className="module-container">
-      <div className="module-header">
-        <div>
-          <h2 className="module-title">Painel Principal</h2>
-          <p className="module-subtitle">Visão geral do mês — em construção.</p>
+      {/* Alertas globais de feedback */}
+      {mensagemSucesso && <div className="alert alert-success">{mensagemSucesso}</div>}
+      {erro && <div className="alert alert-error">{erro}</div>}
+
+      {/* Barra de Navegação de Períodos e Ação Rápida */}
+      <div className="dashboard-periodo-bar">
+        <div className="dashboard-periodo-controls">
+          <button
+            type="button"
+            className="dashboard-periodo-btn"
+            onClick={mesAnterior}
+            title="Mês Anterior"
+          >
+            ◀
+          </button>
+          <span className="dashboard-periodo-titulo">
+            {nomesMeses[mes - 1]} de {ano}
+          </span>
+          <button
+            type="button"
+            className="dashboard-periodo-btn"
+            onClick={mesSeguinte}
+            title="Próximo Mês"
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            className="dashboard-periodo-btn"
+            onClick={mesAtual}
+            title="Ir para o Mês Atual"
+            style={{ marginLeft: '0.25rem' }}
+          >
+            Hoje
+          </button>
         </div>
+
+        <button
+          type="button"
+          className="btn-novo-lancamento-destaque"
+          onClick={() => abrirNovoLancamento('despesa')}
+        >
+          <span>＋</span> Novo Lançamento
+        </button>
       </div>
-      <div className="empty-state">
-        <div className="empty-icon">📊</div>
-        <p className="empty-title">Dashboard em construção</p>
-        <p className="empty-subtitle">Será implementado na Fase 10. Utilize o menu lateral para navegar.</p>
-      </div>
+
+      {carregando ? (
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Carregando indicadores do painel...</p>
+        </div>
+      ) : (
+        <>
+          {/* Grade de Indicadores Principais (KPIs) */}
+          <div className="dashboard-kpi-grid">
+            {/* Saldo Líquido do Mês */}
+            <div className="dashboard-kpi-card">
+              <div className="dashboard-kpi-header">
+                <span className="dashboard-kpi-label">
+                  ⚖️ Saldo Líquido do Mês
+                </span>
+                <div className="dashboard-kpi-icon">💰</div>
+              </div>
+              <div className={`dashboard-kpi-value ${saldoMesClasse}`}>
+                {formatarMoeda(metricas.saldo_mes)}
+              </div>
+              <span className="dashboard-kpi-sub">
+                Receitas Pagas − Despesas Pagas
+              </span>
+            </div>
+
+            {/* Total de Receitas */}
+            <div className="dashboard-kpi-card">
+              <div className="dashboard-kpi-header">
+                <span className="dashboard-kpi-label">
+                  📈 Receitas do Mês
+                </span>
+                <div className="dashboard-kpi-icon" style={{ color: 'var(--tertiary)' }}>↑</div>
+              </div>
+              <div className="dashboard-kpi-value positivo">
+                {formatarMoeda(metricas.total_receitas)}
+              </div>
+              <span className="dashboard-kpi-sub">
+                Pagas: {formatarMoeda(metricas.total_receitas_pagas)}
+              </span>
+            </div>
+
+            {/* Total de Despesas */}
+            <div className="dashboard-kpi-card">
+              <div className="dashboard-kpi-header">
+                <span className="dashboard-kpi-label">
+                  📉 Despesas do Mês
+                </span>
+                <div className="dashboard-kpi-icon" style={{ color: 'var(--error)' }}>↓</div>
+              </div>
+              <div className="dashboard-kpi-value negativo">
+                {formatarMoeda(metricas.total_despesas)}
+              </div>
+              <span className="dashboard-kpi-sub">
+                Pagas: {formatarMoeda(metricas.total_despesas_pagas)}
+              </span>
+            </div>
+
+            {/* Saldo Consolidado em Carteiras */}
+            <div className="dashboard-kpi-card">
+              <div className="dashboard-kpi-header">
+                <span className="dashboard-kpi-label">
+                  🏦 Saldo Total em Contas
+                </span>
+                <div className="dashboard-kpi-icon">🏛️</div>
+              </div>
+              <div className="dashboard-kpi-value neutro">
+                {formatarMoeda(metricas.saldo_total_contas)}
+              </div>
+              <span className="dashboard-kpi-sub">
+                Consolidado de carteiras ativas
+              </span>
+            </div>
+          </div>
+
+          {/* Seção Principal: Gráfico Monocromático e Bloco de Alertas */}
+          <div className="dashboard-main-grid">
+            {/* Gráfico Monocromático de Despesas por Categoria */}
+            <div className="dashboard-panel-card">
+              <div className="dashboard-panel-header">
+                <h3 className="dashboard-panel-title">
+                  <span>📊</span> Despesas por Categoria
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {nomesMeses[mes - 1]}/{ano}
+                </span>
+              </div>
+
+              {graficoCategorias.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2.5rem 1rem' }}>
+                  <div className="empty-icon">🏷️</div>
+                  <p className="empty-title">Nenhuma despesa no período</p>
+                  <p className="empty-subtitle">
+                    Quando você registrar gastos em {nomesMeses[mes - 1]}, a distribuição por categoria será exibida aqui.
+                  </p>
+                </div>
+              ) : (
+                <div className="grafico-barras-lista">
+                  {graficoCategorias.map((item) => (
+                    <div key={item.categoria_id || item.nome} className="grafico-barra-item">
+                      <div className="grafico-barra-info">
+                        <span className="grafico-barra-nome">
+                          <span>•</span> {item.nome}
+                        </span>
+                        <div className="grafico-barra-valores">
+                          <span className="grafico-barra-montante">
+                            {formatarMoeda(item.total)}
+                          </span>
+                          <span className="grafico-barra-percentual">
+                            {item.porcentagem}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="grafico-barra-track">
+                        <div
+                          className="grafico-barra-fill"
+                          style={{ width: `${Math.min(100, Math.max(2, item.porcentagem))}%` }}
+                          title={`${item.nome}: ${formatarMoeda(item.total)} (${item.porcentagem}%)`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bloco de Alertas de Vencimento com Ação Rápida */}
+            <div className="dashboard-panel-card">
+              <div className="dashboard-panel-header">
+                <h3 className="dashboard-panel-title">
+                  <span>🔔</span> Alertas de Vencimento
+                </h3>
+                {totalAlertas > 0 && (
+                  <span
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: 'var(--error)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: 'var(--radius-sm)',
+                    }}
+                  >
+                    {totalAlertas} {totalAlertas === 1 ? 'pendência' : 'pendências'}
+                  </span>
+                )}
+              </div>
+
+              {totalAlertas === 0 ? (
+                <div className="empty-state" style={{ padding: '2.5rem 1rem' }}>
+                  <div className="empty-icon" style={{ color: 'var(--tertiary)' }}>✓</div>
+                  <p className="empty-title">Tudo em dia!</p>
+                  <p className="empty-subtitle">
+                    Você não possui contas vencidas ou a vencer nos próximos 5 dias.
+                  </p>
+                </div>
+              ) : (
+                <div className="alertas-container">
+                  {/* Vencidos (em atraso) */}
+                  {alertasVencidos.map((alerta) => (
+                    <div key={alerta.id} className="alerta-card-item vencido">
+                      <div className="alerta-info">
+                        <span className="alerta-descricao">{alerta.descricao}</span>
+                        <span className="alerta-detalhe">
+                          <span className="alerta-tag-vencido">⚠️ Vencida há {Math.abs(alerta.dias_diferenca)} dia(s)</span>
+                          <span>•</span>
+                          <span>{alerta.categoria}</span>
+                        </span>
+                      </div>
+                      <div className="alerta-acoes">
+                        <span className="alerta-valor">{formatarMoeda(alerta.valor)}</span>
+                        <button
+                          type="button"
+                          className="alerta-btn-pagar"
+                          onClick={() => marcarComoPago(alerta)}
+                          disabled={quitandoId === alerta.id}
+                          title="Marcar conta como paga agora"
+                        >
+                          {quitandoId === alerta.id ? '...' : '✓ Pagar'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* A Vencer nos próximos 5 dias */}
+                  {alertasAVencer.map((alerta) => (
+                    <div key={alerta.id} className="alerta-card-item a_vencer">
+                      <div className="alerta-info">
+                        <span className="alerta-descricao">{alerta.descricao}</span>
+                        <span className="alerta-detalhe">
+                          <span className="alerta-tag-a-vencer">
+                            🕒 {alerta.dias_diferenca === 0 ? 'Vence hoje!' : `Vence em ${alerta.dias_diferenca} dia(s)`}
+                          </span>
+                          <span>•</span>
+                          <span>{alerta.categoria}</span>
+                        </span>
+                      </div>
+                      <div className="alerta-acoes">
+                        <span className="alerta-valor">{formatarMoeda(alerta.valor)}</span>
+                        <button
+                          type="button"
+                          className="alerta-btn-pagar"
+                          onClick={() => marcarComoPago(alerta)}
+                          disabled={quitandoId === alerta.id}
+                          title="Marcar conta como paga agora"
+                        >
+                          {quitandoId === alerta.id ? '...' : '✓ Pagar'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal de Novo Lançamento Rápido no Dashboard */}
+      {modalAberto && (
+        <Modal titulo="Novo Lançamento" onFechar={fecharModal}>
+          <div className="modal-tabs">
+            <button
+              type="button"
+              className={`modal-tab-btn tab-despesa ${abaModal === 'despesa' ? 'active' : ''}`}
+              onClick={() => mudarAbaModal('despesa')}
+            >
+              ↑ Despesa
+            </button>
+            <button
+              type="button"
+              className={`modal-tab-btn tab-receita ${abaModal === 'receita' ? 'active' : ''}`}
+              onClick={() => mudarAbaModal('receita')}
+            >
+              ↓ Receita
+            </button>
+            <button
+              type="button"
+              className={`modal-tab-btn tab-transferencia ${abaModal === 'transferencia' ? 'active' : ''}`}
+              onClick={() => mudarAbaModal('transferencia')}
+            >
+              ⇄ Transferência
+            </button>
+          </div>
+
+          <form onSubmit={handleSalvar}>
+            {erroModal && <div className="alert alert-error">{erroModal}</div>}
+
+            {avisoSaldoInsuficiente && (
+              <div className="modal-warning-box">
+                <div className="modal-warning-title">⚠️ Saldo Insuficiente na Origem</div>
+                <p style={{ margin: '0 0 0.75rem 0' }}>{avisoSaldoInsuficiente}</p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm btn-danger"
+                  onClick={() => handleSalvar(null, true)}
+                  disabled={salvando}
+                >
+                  Confirmar e Transferir Mesmo Assim
+                </button>
+              </div>
+            )}
+
+            {/* Campo Monetário com Stepper de R$ 1,00 */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="dash-form-valor">Valor</label>
+              <div className="currency-input-wrapper">
+                <span className="currency-prefix">R$</span>
+                <input
+                  id="dash-form-valor"
+                  type="text"
+                  inputMode="numeric"
+                  className="form-input currency-input-field"
+                  value={formValor}
+                  onChange={handleValorChange}
+                  disabled={salvando}
+                  placeholder="0,00"
+                  required
+                />
+                <div className="stepper-buttons-container">
+                  <button
+                    type="button"
+                    className="stepper-btn stepper-up"
+                    onClick={() => incrementarValor(1)}
+                    disabled={salvando}
+                    title="Aumentar R$ 1,00"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    className="stepper-btn stepper-down"
+                    onClick={() => incrementarValor(-1)}
+                    disabled={salvando}
+                    title="Diminuir R$ 1,00"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Descrição (Apenas para Receita e Despesa) */}
+            {abaModal !== 'transferencia' && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="dash-form-desc">Descrição</label>
+                <input
+                  id="dash-form-desc"
+                  type="text"
+                  className="form-input"
+                  placeholder="Ex: Supermercado, Salário, Internet"
+                  value={formDescricao}
+                  onChange={(e) => setFormDescricao(e.target.value)}
+                  disabled={salvando}
+                  maxLength={200}
+                  required
+                />
+              </div>
+            )}
+
+            {/* Datas */}
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label" htmlFor="dash-form-comp">
+                  {abaModal === 'transferencia' ? 'Data da Transferência' : 'Data Contábil'}
+                </label>
+                <input
+                  id="dash-form-comp"
+                  type="date"
+                  className="form-input"
+                  value={formDataCompetencia}
+                  onChange={(e) => setFormDataCompetencia(e.target.value)}
+                  disabled={salvando}
+                  required
+                />
+              </div>
+
+              {abaModal !== 'transferencia' && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-form-venc">Data de Vencimento</label>
+                  <input
+                    id="dash-form-venc"
+                    type="date"
+                    className="form-input"
+                    value={formDataVencimento}
+                    onChange={(e) => setFormDataVencimento(e.target.value)}
+                    disabled={salvando}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Seleção de Categoria e Conta para Receita/Despesa */}
+            {abaModal !== 'transferencia' ? (
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-form-cat">Categoria</label>
+                  <select
+                    id="dash-form-cat"
+                    className="form-select"
+                    value={formCategoriaId}
+                    onChange={(e) => setFormCategoriaId(e.target.value)}
+                    disabled={salvando}
+                    required
+                  >
+                    <option value="">Selecione uma categoria...</option>
+                    {categorias
+                      .filter((c) => c.tipo === abaModal && c.status === 'ativo')
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-form-conta">Conta / Carteira</label>
+                  <select
+                    id="dash-form-conta"
+                    className="form-select"
+                    value={formContaId}
+                    onChange={(e) => setFormContaId(e.target.value)}
+                    disabled={salvando}
+                    required
+                  >
+                    <option value="">Selecione a conta...</option>
+                    {contas
+                      .filter((c) => c.status === 'ativo')
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              /* Seleção de Contas para Transferência */
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-transf-origem">Conta de Origem (Sai)</label>
+                  <select
+                    id="dash-transf-origem"
+                    className="form-select"
+                    value={formContaId}
+                    onChange={(e) => setFormContaId(e.target.value)}
+                    disabled={salvando}
+                    required
+                  >
+                    <option value="">Selecione a origem...</option>
+                    {contas
+                      .filter((c) => c.status === 'ativo')
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-transf-destino">Conta de Destino (Entra)</label>
+                  <select
+                    id="dash-transf-destino"
+                    className="form-select"
+                    value={formContaDestinoId}
+                    onChange={(e) => setFormContaDestinoId(e.target.value)}
+                    disabled={salvando}
+                    required
+                  >
+                    <option value="">Selecione o destino...</option>
+                    {contas
+                      .filter((c) => c.status === 'ativo' && c.id.toString() !== formContaId)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Forma de Pagamento e Status */}
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label" htmlFor="dash-form-fp">Forma de Pagamento</label>
+                <select
+                  id="dash-form-fp"
+                  className="form-select"
+                  value={formFormaPagamento}
+                  onChange={(e) => setFormFormaPagamento(e.target.value)}
+                  disabled={salvando}
+                >
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="PIX">PIX</option>
+                  <option value="Cartão de Débito">Cartão de Débito</option>
+                  <option value="Cartão de Crédito">Cartão de Crédito</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Transferência">Transferência</option>
+                </select>
+              </div>
+
+              {abaModal !== 'transferencia' && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="dash-form-status">Status de Pagamento</label>
+                  <select
+                    id="dash-form-status"
+                    className="form-select"
+                    value={formStatus}
+                    onChange={(e) => setFormStatus(e.target.value)}
+                    disabled={salvando}
+                  >
+                    <option value="pago">Já liquidado / Pago</option>
+                    <option value="pendente">Pendente / Em aberto</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Observações */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="dash-form-obs">Observações (opcional)</label>
+              <textarea
+                id="dash-form-obs"
+                className="form-input"
+                rows="2"
+                placeholder="Anotações adicionais sobre este lançamento..."
+                value={formObservacao}
+                onChange={(e) => setFormObservacao(e.target.value)}
+                disabled={salvando}
+              />
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={fecharModal}
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={salvando}
+              >
+                {salvando ? 'Salvando...' : 'Salvar Lançamento'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

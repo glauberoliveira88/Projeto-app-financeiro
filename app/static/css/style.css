@@ -1684,4 +1684,356 @@ body.light-theme .recorrentes-kpi-value.saldo-zero {
   color: var(--error);
 }
 
+/* ==========================================================================
+   Módulo do Painel Principal — Dashboard (docs/DESIGN.md e docs/FSD.md - Fase 10)
+   ========================================================================== */
+
+/* Barra de Navegação de Períodos */
+.dashboard-periodo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-container);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-periodo-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-periodo-titulo {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  min-width: 170px;
+  text-align: center;
+}
+
+.dashboard-periodo-btn {
+  background: var(--surface-base);
+  border: var(--border-width) solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-periodo-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+/* Grade de Indicadores / Cards de Métricas */
+.dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-kpi-card {
+  background: var(--surface-container);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color var(--transition-fast);
+}
+
+.dashboard-kpi-card:hover {
+  border-color: var(--border-focus);
+}
+
+.dashboard-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-kpi-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-kpi-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--surface-base);
+  border: var(--border-width) solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.dashboard-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.dashboard-kpi-value.positivo {
+  color: var(--tertiary);
+}
+
+.dashboard-kpi-value.negativo {
+  color: var(--error);
+}
+
+.dashboard-kpi-value.neutro {
+  color: var(--text-primary);
+}
+
+.dashboard-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Layout em duas colunas: Gráfico Monocromático e Bloco de Alertas */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 992px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card do Gráfico Monocromático */
+.dashboard-panel-card {
+  background: var(--surface-container);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.dashboard-panel-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Barras Horizontais do Gráfico de Categorias */
+.grafico-barras-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.grafico-barra-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grafico-barra-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.grafico-barra-nome {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.grafico-barra-valores {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.grafico-barra-montante {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.grafico-barra-percentual {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 42px;
+  text-align: right;
+}
+
+.grafico-barra-track {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-base);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: var(--border-width) solid var(--border-color);
+}
+
+.grafico-barra-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed 0%, var(--primary) 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease-in-out;
+}
+
+/* Bloco de Alertas de Vencimento */
+.alertas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.alerta-card-item {
+  background: var(--surface-base);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: all var(--transition-fast);
+}
+
+.alerta-card-item.vencido {
+  border-left: 4px solid var(--error);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.alerta-card-item.a_vencer {
+  border-left: 4px solid var(--warning);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.alerta-card-item:hover {
+  border-color: var(--border-color);
+  transform: translateX(2px);
+}
+
+.alerta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.alerta-descricao {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alerta-detalhe {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.alerta-tag-vencido {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.alerta-tag-a-vencer {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.alerta-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alerta-valor {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--error);
+  white-space: nowrap;
+}
+
+.alerta-btn-pagar {
+  background: var(--surface-container);
+  border: var(--border-width) solid var(--border-color);
+  color: var(--tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.alerta-btn-pagar:hover {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: var(--tertiary);
+}
+
+/* Botão de Ação Rápida no Cabeçalho do Dashboard */
+.btn-novo-lancamento-destaque {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-novo-lancamento-destaque:hover {
+  opacity: 0.9;
+}
+
 
