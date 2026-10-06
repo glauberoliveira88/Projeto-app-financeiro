@@ -72,6 +72,30 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
   2. Adição de verificação explícita `if not validar_posse(recurso, "tipo"): return jsonify({"sucesso": False, "erro": "Acesso não autorizado."}), 403` em todas as rotas e validações de chaves estrangeiras (`categoria_id`, `conta_id`, `id`) no `recorrentes_controller.py`.
 - **Como evitar no futuro:** Em endpoints de API REST, padronizar conversores numéricos resilientes a múltiplos formatos e sempre validar explicitamente o booleano de retorno de salvaguardas de autorização (`if not validar_posse(...) return 403`).
 
+## 2026-10-06 - Divergências de UI/UX e quebra de layout na tela e modais de Fixos Recorrentes
 
+- **Sintoma:** (1) Bloco de resumo financeiro de fixos renderizado como texto puro desestruturado sem cartões horizontais de KPIs e com textos redundantes entre parênteses; (2) Badges de tipo nos cards da listagem com quebra de linha inadequada entre a seta direcional e a palavra ("Despesa"/"Receita"); (3) Textos prolixos no modal de cadastro ("Descrição do Fixo", "Dia de Vencimento Padrão no Mês (1 a 31)") e botões de stepper com rótulos redundantes ("▲ +1 dia" / "▼ -1 dia"); (4) Botão de exclusão com contraste desarmônico (letras vermelhas sob fundo violeta).
+- **Causa:** Ausência de classes de grid e cards de KPI de fixos no `style.css`; reaproveitamento indevido da classe `.tipo-badge` (que possuía largura fixa rígida de 24px criada originalmente para ícones isolados de tabela); textos excessivamente extensos e poluídos em labels e botões de steppers; e aplicação concorrente da classe `.btn-danger` sobre `.btn-primary` sobrescrevendo a cor do texto com `color: var(--error) !important`.
+- **Solução aplicada:**
+  1. Criação do layout horizontal `.recorrentes-kpi-grid` e `.recorrentes-kpi-card` com indicadores destacados e semânticos: "📉 Despesas Mensais Fixas", "📈 Entradas Mensais Fixas" e "Balanço Fixo Projetado" (sem bordas coloridas desnecessárias), eliminando textos secundários e parênteses explicativos.
+  2. Criação da classe `.recorrente-tipo-badge` com `display: inline-flex`, `white-space: nowrap` e padding proporcional, eliminando a quebra de linha nas badges dos cards.
+  3. Simplificação dos labels do modal de cadastro para "Descrição" e "Dia de vencimento", e redução dos botões de ajuste de dia para os símbolos essenciais `+` e `−` via classe `.dia-stepper-btn`.
+  4. Remoção da classe conflitante `.btn-danger` no botão primário do modal de exclusão e criação da classe `.btn-confirmar-exclusao` com texto branco e inclusão do emoji de alerta "⚠️ Confirmar Exclusão".
+- **Como evitar no futuro:** Validar a aderência visual de novos componentes de resumo e badges com o design system antes de reutilizar classes criadas para outros contextos; priorizar objetividade e concisão em labels e botões de incremento; e evitar misturar classes utilitárias de cores de texto conflitantes em botões de ação destrutiva com estilo primário.
 
+## 2026-10-06 - Inconsistências de cores semânticas nos KPIs e contraste invertido do botão de exclusão no tema escuro
 
+- **Sintoma:** (1) O valor monetário do mostrador de despesas fixas mensais exibia a cor padrão do texto (branco) em vez de vermelho; e o mostrador do balanço fixo projetado não possuía distinção visual neutra para saldo zero; (2) O botão "⚠️ Confirmar Exclusão" utilizava cor de texto branca forçada (`#ffffff !important`) mesmo no tema escuro (Obsidian), quebrando o padrão de contraste do tema onde o botão primário lilás utiliza fonte escura condizente com a superfície.
+- **Causa:** (1) Atribuição da classe `.despesa` apontando para `var(--text-primary)` em vez de `var(--error)` nos valores dos KPIs de recorrentes; ausência de classe de estado para balanço zero; (2) Uso de classe customizada com cor estática branca em vez do padrão nativo `.btn.btn-primary` (que utiliza `var(--primary)` e `var(--primary-contrast)`, respondendo de forma calibrada tanto no tema escuro quanto no claro, idêntico ao botão "+ Novo Fixo").
+- **Solução aplicada:**
+  1. Configurada a cor de `.recorrentes-kpi-value.despesa` para `var(--error)` (sempre vermelho) e mantida `.recorrentes-kpi-value.receita` com `var(--tertiary)` (sempre verde).
+  2. Implementada lógica dinâmica no Balanço Fixo Projetado para aplicar classe verde (`saldo-positivo`) quando > 0, vermelha (`saldo-negativo`) quando < 0 e branca (`saldo-zero`) quando exatamente 0.
+  3. Removida a sobreposição estática de cor branca e padronizado o botão de exclusão como `btn btn-primary` com o prefixo `⚠️ Confirmar Exclusão`, adotando o mesmo design e resposta dinâmica de contraste claro/escuro do botão "+ Novo Fixo".
+- **Como evitar no futuro:** Sempre vincular botões de ação primária à classe canônica `.btn.btn-primary` sem impor regras com `!important` que burlem o chaveamento de `--primary-contrast` entre temas; e verificar que cores semânticas de despesas e receitas sempre usem `var(--error)` e `var(--tertiary)` respectivamente.
+
+## 2026-10-06 - Invisibilidade do valor neutro (zero) do Balanço Fixo Projetado no tema claro
+
+- **Sintoma:** Ao alternar para o tema claro, caso o Balanço Fixo Projetado resultasse em R$ 0,00, o texto monetário ficava completamente invisível por estar configurado com cor fixa branca (`#ffffff`), fundindo-se com o fundo claro da tela.
+- **Causa:** Definição da classe `.recorrentes-kpi-value.saldo-zero` com valor estático `#ffffff` sem declarar a variação correspondente para o tema claro sob `[data-theme="light"]`.
+- **Solução aplicada:** Adicionado seletor de tema claro `[data-theme="light"] .recorrentes-kpi-value.saldo-zero, body.light-theme .recorrentes-kpi-value.saldo-zero { color: #09090b; }`, garantindo texto preto no tema claro e preservando a cor branca no tema escuro.
+- **Como evitar no futuro:** Sempre validar os dois modos de exibição (escuro e claro) ao aplicar cores literais em elementos tipográficos, assegurando a compatibilidade de contraste por meio das variáveis ou regras condicionais de tema.

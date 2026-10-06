@@ -1,6 +1,6 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-01 (Conclusão da Fase 9: Módulo de Lançamentos Recorrentes com automação de fixos, sincronização transparente e interface React)
+* **Última atualização:** 2026-10-06 (Calibração de contraste do balanço fixo neutro no tema claro e escuro)
 * **Fase atual:** Fase 9 concluída — Módulo de Lançamentos Recorrentes
 * **Próximo passo recomendado:** Iniciar a Fase 10 (Módulo do Painel Principal - Dashboard, Gráficos Monocromáticos e Alertas)
 
@@ -116,6 +116,7 @@
 - [x] Implementar serviço transparente de verificação e geração de lançamentos de virada de mês (`app/services/recorrentes_service.py`), integrado ao `GET /api/lancamentos`;
 - [x] Tratar ajuste automático de dia de vencimento em meses mais curtos (dia 31 ajustado para último dia válido do mês);
 - [x] Construir componentes React para gerenciamento de fixos (`TelaRecorrentes`, cards Obsidian, resumo com total de despesas e receitas fixas, modal com abas, stepper monetário de R$ 1,00 e modal de exclusão);
+- [x] Refinar UI/UX dos fixos recorrentes: layout horizontal de KPIs com cores semânticas estritas (despesas sempre em vermelho, receitas em verde, balanço projetado adaptável e branco em zero), eliminação de quebra de linha nas badges, simplificação de campos no modal de cadastro ("Descrição", "Dia de vencimento", steppers +/−) e botão de exclusão padronizado com `btn-primary` e emoji de alerta ("⚠️ Confirmar Exclusão");
 - [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase9_recorrentes.py`).
 
 ---

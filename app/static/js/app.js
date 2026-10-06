@@ -3262,50 +3262,38 @@ function TelaRecorrentes() {
         </div>
       )}
 
-      {/* Cartões de Indicadores de Fixos */}
-      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Despesas Fixas / Mês</span>
-            <span className="metric-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)' }}>
-              ↑ Fixos
-            </span>
-          </div>
-          <div className="metric-value" style={{ color: 'var(--text-primary)' }}>
+      {/* Indicadores de Fixos Recorrentes */}
+      <div className="recorrentes-kpi-grid">
+        <div className="recorrentes-kpi-card">
+          <span className="recorrentes-kpi-label">📉 Despesas Mensais Fixas</span>
+          <span className="recorrentes-kpi-value despesa">
             {formatarMoeda(totalDespesasFixas)}
-          </div>
-          <div className="metric-subtext">Comprometimento mensal fixo ativo</div>
+          </span>
         </div>
 
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Receitas Fixas / Mês</span>
-            <span className="metric-badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: 'var(--tertiary)' }}>
-              ↓ Fixos
-            </span>
-          </div>
-          <div className="metric-value" style={{ color: 'var(--tertiary)' }}>
+        <div className="recorrentes-kpi-card">
+          <span className="recorrentes-kpi-label">📈 Entradas Mensais Fixas</span>
+          <span className="recorrentes-kpi-value receita">
             {formatarMoeda(totalReceitasFixas)}
-          </div>
-          <div className="metric-subtext">Entradas mensais certas (salário, etc.)</div>
+          </span>
         </div>
 
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Balanço Fixo Projetado</span>
-            <span className="metric-badge" style={{ background: 'var(--surface-active)', color: 'var(--text-secondary)' }}>
-              Saldo Base
-            </span>
-          </div>
-          <div
-            className="metric-value"
-            style={{ color: saldoProjetado >= 0 ? 'var(--tertiary)' : 'var(--error)' }}
+        <div className="recorrentes-kpi-card">
+          <span className="recorrentes-kpi-label">Balanço Fixo Projetado</span>
+          <span
+            className={`recorrentes-kpi-value ${
+              saldoProjetado > 0
+                ? 'saldo-positivo'
+                : saldoProjetado < 0
+                ? 'saldo-negativo'
+                : 'saldo-zero'
+            }`}
           >
             {formatarMoeda(saldoProjetado)}
-          </div>
-          <div className="metric-subtext">Sobra fixa antes de gastos avulsos</div>
+          </span>
         </div>
       </div>
+
 
       {/* Linha de Filtros e Busca */}
       <div className="lancamentos-filters-row" style={{ marginBottom: '1.25rem' }}>
@@ -3376,7 +3364,7 @@ function TelaRecorrentes() {
                     <div>
                       <div className="recorrente-card-title">{item.descricao}</div>
                       <div className="recorrente-card-meta">
-                        <span className={`tipo-badge tipo-badge-${item.tipo}`}>
+                        <span className={`recorrente-tipo-badge tipo-${item.tipo}`}>
                           {isReceita ? '↓ Receita' : '↑ Despesa'}
                         </span>
                         <span>•</span>
@@ -3512,7 +3500,7 @@ function TelaRecorrentes() {
             {/* Descrição */}
             <div className="form-group">
               <label className="form-label" htmlFor="rec-descricao">
-                Descrição do Fixo
+                Descrição
               </label>
               <input
                 id="rec-descricao"
@@ -3531,10 +3519,10 @@ function TelaRecorrentes() {
               />
             </div>
 
-            {/* Dia de Vencimento (1 a 31) com Steppers */}
+            {/* Dia de Vencimento com Steppers */}
             <div className="form-group">
               <label className="form-label" htmlFor="rec-dia">
-                Dia de Vencimento Padrão no Mês (1 a 31)
+                Dia de vencimento
               </label>
               <div className="dia-stepper-container">
                 <input
@@ -3558,21 +3546,21 @@ function TelaRecorrentes() {
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
                   <button
                     type="button"
-                    className="btn btn-secondary btn-sm"
+                    className="btn btn-secondary btn-sm dia-stepper-btn"
                     onClick={() => ajustarDiaStepper(1)}
                     disabled={salvando || formDiaVencimento >= 31}
                     title="Aumentar dia"
                   >
-                    ▲ +1 dia
+                    +
                   </button>
                   <button
                     type="button"
-                    className="btn btn-secondary btn-sm"
+                    className="btn btn-secondary btn-sm dia-stepper-btn"
                     onClick={() => ajustarDiaStepper(-1)}
                     disabled={salvando || formDiaVencimento <= 1}
                     title="Diminuir dia"
                   >
-                    ▼ -1 dia
+                    −
                   </button>
                 </div>
               </div>
@@ -3720,11 +3708,11 @@ function TelaRecorrentes() {
             </button>
             <button
               type="button"
-              className="btn btn-primary btn-danger"
+              className="btn btn-primary"
               onClick={handleExcluir}
               disabled={excluindo}
             >
-              {excluindo ? 'Excluindo...' : 'Confirmar Exclusão'}
+              {excluindo ? 'Excluindo...' : '⚠️ Confirmar Exclusão'}
             </button>
           </div>
         </Modal>

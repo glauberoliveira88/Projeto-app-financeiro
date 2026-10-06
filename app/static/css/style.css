@@ -1588,4 +1588,100 @@ a:hover {
   font-weight: 700;
 }
 
+.dia-stepper-btn {
+  min-width: 36px;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.35rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Indicadores / KPIs de Fixos Recorrentes */
+.recorrentes-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.recorrentes-kpi-card {
+  background: var(--surface-container);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color var(--transition-fast);
+}
+
+.recorrentes-kpi-card:hover {
+  border-color: var(--border-color-hover);
+}
+
+.recorrentes-kpi-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.recorrentes-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.recorrentes-kpi-value.despesa {
+  color: var(--error);
+}
+
+.recorrentes-kpi-value.receita {
+  color: var(--tertiary);
+}
+
+.recorrentes-kpi-value.saldo-positivo {
+  color: var(--tertiary);
+}
+
+.recorrentes-kpi-value.saldo-negativo {
+  color: var(--error);
+}
+
+.recorrentes-kpi-value.saldo-zero {
+  color: #ffffff;
+}
+
+[data-theme="light"] .recorrentes-kpi-value.saldo-zero,
+body.light-theme .recorrentes-kpi-value.saldo-zero {
+  color: #09090b;
+}
+
+/* Badge sem quebra de linha para tipo nos cards de recorrentes */
+.recorrente-tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.recorrente-tipo-badge.tipo-receita {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--tertiary);
+}
+
+.recorrente-tipo-badge.tipo-despesa {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
 
