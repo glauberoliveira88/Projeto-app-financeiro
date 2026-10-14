@@ -1,7 +1,7 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-13 (Correção de ReferenceError em mensagemSucesso do TelaDashboard e restauração completa da renderização pós-login)
-* **Fase atual:** Fase 10 concluída e calibrada — Módulo do Painel Principal (Dashboard)
+* **Última atualização:** 2026-10-14 (Tratamento das imagens das logos nos temas claro e escuro para PNG com canal alfa e fundo transparente, eliminando discrepância visual com o background)
+* **Fase atual:** Fase 10 concluída e calibrada; assets visuais tratados com transparência
 * **Próximo passo recomendado:** Iniciar a Fase 11 (Módulo de Configurações, Perfil e Alternância de Tema)
 
 ---
