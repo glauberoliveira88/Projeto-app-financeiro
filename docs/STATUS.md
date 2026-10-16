@@ -1,7 +1,7 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-14 (Tratamento das imagens das logos nos temas claro e escuro para PNG com canal alfa e fundo transparente, eliminando discrepância visual com o background)
-* **Fase atual:** Fase 10 concluída e calibrada; assets visuais tratados com transparência
+* **Última atualização:** 2026-10-16 (Implementação de exclusão de carteiras com informações vinculadas em cascata e modal informativo/destrutivo de confirmação na TelaContas)
+* **Fase atual:** Fase 10 concluída e calibrada; Módulo de Contas/Carteiras aprimorado com exclusão conjunta de vínculos
 * **Próximo passo recomendado:** Iniciar a Fase 11 (Módulo de Configurações, Perfil e Alternância de Tema)
 
 ---
@@ -85,9 +85,10 @@
 ### Fase 6 — Módulo de Contas e Carteiras
 - [x] Implementar `app/controllers/contas_controller.py` com endpoints `/api/contas/*` (listagem, criação, edição, arquivamento, reativação e exclusão);
 - [x] Implementar cálculo de saldo contábil em tempo real conforme fórmula do FSD;
-- [x] Implementar regras de arquivamento, reativação e bloqueio de exclusão física se houver movimentações vinculadas (ativas ou soft-deletadas);
-- [x] Construir componentes React de gestão de contas (`TelaContas`, `Modal`, cards com badges e saldo consolidado);
-- [x] Implementar suíte de testes unitários automatizados com 100% de aprovação (`tests/test_fase6_contas.py`).
+- [x] Implementar regras de arquivamento, reativação e bloqueio de exclusão física direta quando houver histórico vinculado;
+- [x] Implementar suporte a exclusão em lote/cascata de carteiras junto com todos os seus lançamentos e vínculos via `DELETE /api/contas/<id>?excluir_vinculados=true` e `POST /api/contas/<id>/excluir-com-vinculos`;
+- [x] Construir componentes React de gestão de contas (`TelaContas`, `Modal`, cards com badges, saldo consolidado e modal de confirmação para exclusão de vínculos);
+- [x] Implementar e expandir suíte de testes unitários automatizados com 100% de aprovação (`tests/test_fase6_contas.py`).
 
 ---
 

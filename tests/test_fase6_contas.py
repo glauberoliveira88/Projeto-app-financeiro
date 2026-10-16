@@ -11,7 +11,7 @@ Verifica:
 import unittest
 from decimal import Decimal
 from app import create_app
-from app.models import db, Usuario, Conta, Lancamento
+from app.models import db, Usuario, Conta, Categoria, Lancamento, LancamentoRecorrente
 from config.config import Config
 
 
@@ -113,6 +113,98 @@ class ContasTestCase(unittest.TestCase):
         # Verifica que foi excluída
         res_check = self.client.get("/api/contas")
         self.assertEqual(len(res_check.get_json()["dados"]["contas"]), 0)
+
+    def test_exclusao_conta_com_vinculos(self):
+        """Testa bloqueio com dados vinculados e opção de exclusão conjunta (FSD/Issue Carteiras)."""
+        from datetime import date
+        self.autenticar(self.user1.id)
+        headers = {"X-CSRFToken": "csrf-token-valido"}
+
+        # Cria categoria de apoio
+        cat = Categoria(usuario_id=self.user1.id, nome="Alimentação", tipo="despesa")
+        # Cria conta
+        conta = Conta(usuario_id=self.user1.id, nome="Carteira Física", saldo_inicial=Decimal("200.00"))
+        db.session.add_all([cat, conta])
+        db.session.commit()
+
+        # Cria 1 lançamento vinculado à conta
+        lanc = Lancamento(
+            usuario_id=self.user1.id,
+            tipo="despesa",
+            valor=Decimal("50.00"),
+            data_competencia=date.today(),
+            data_vencimento=date.today(),
+            descricao="Almoço",
+            categoria_id=cat.id,
+            conta_id=conta.id,
+            forma_pagamento="Dinheiro",
+            status="pago",
+        )
+        # Cria 1 modelo recorrente vinculado à conta
+        rec = LancamentoRecorrente(
+            usuario_id=self.user1.id,
+            tipo="despesa",
+            valor=Decimal("30.00"),
+            descricao="Assinatura Jornal",
+            categoria_id=cat.id,
+            conta_id=conta.id,
+            dia_vencimento=10,
+            ativo=True,
+        )
+        db.session.add_all([lanc, rec])
+        db.session.commit()
+
+        conta_id = conta.id
+        lanc_id = lanc.id
+        rec_id = rec.id
+
+        # 1. Tentativa de exclusão direta sem flag de vínculos: deve ser bloqueada com dados informativos
+        res_tentativa = self.client.delete(f"/api/contas/{conta_id}", headers=headers)
+        self.assertEqual(res_tentativa.status_code, 400)
+        dados_erro = res_tentativa.get_json()
+        self.assertFalse(dados_erro["sucesso"])
+        self.assertTrue(dados_erro["tem_vinculos"])
+        self.assertEqual(dados_erro["total_lancamentos"], 1)
+        self.assertEqual(dados_erro["total_recorrentes"], 1)
+
+        # 2. Exclusão confirmando 'excluir_vinculados=true' via query parameter
+        res_del = self.client.delete(f"/api/contas/{conta_id}?excluir_vinculados=true", headers=headers)
+        self.assertEqual(res_del.status_code, 200)
+        dados_del = res_del.get_json()
+        self.assertTrue(dados_del["sucesso"])
+
+        # Confirma que a conta, o lançamento e o recorrente foram excluídos
+        self.assertIsNone(db.session.get(Conta, conta_id))
+        self.assertIsNone(db.session.get(Lancamento, lanc_id))
+        self.assertIsNone(db.session.get(LancamentoRecorrente, rec_id))
+
+        # 3. Teste do endpoint POST /api/contas/<id>/excluir-com-vinculos
+        conta2 = Conta(usuario_id=self.user1.id, nome="Conta Secundária", saldo_inicial=Decimal("100.00"))
+        db.session.add(conta2)
+        db.session.commit()
+
+        conta2_id = conta2.id
+        lanc2 = Lancamento(
+            usuario_id=self.user1.id,
+            tipo="receita",
+            valor=Decimal("1000.00"),
+            data_competencia=date.today(),
+            data_vencimento=date.today(),
+            descricao="Freelance",
+            categoria_id=cat.id,
+            conta_id=conta2.id,
+            forma_pagamento="PIX",
+            status="pago",
+        )
+        db.session.add(lanc2)
+        db.session.commit()
+        lanc2_id = lanc2.id
+
+        res_post = self.client.post(f"/api/contas/{conta2_id}/excluir-com-vinculos", headers=headers)
+        self.assertEqual(res_post.status_code, 200)
+        self.assertTrue(res_post.get_json()["sucesso"])
+        self.assertIsNone(db.session.get(Conta, conta2_id))
+        self.assertIsNone(db.session.get(Lancamento, lanc2_id))
 
 
 if __name__ == "__main__":

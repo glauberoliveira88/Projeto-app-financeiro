@@ -708,6 +708,13 @@ function TelaContas() {
   const [mensagemSucesso, setMensagemSucesso] = React.useState('');
   const [erroModal, setErroModal] = React.useState('');
 
+  // Estados do Modal de Exclusão de Conta com Vínculos
+  const [modalExcluirAberto, setModalExcluirAberto] = React.useState(false);
+  const [contaParaExcluir, setContaParaExcluir] = React.useState(null);
+  const [infoVinculos, setInfoVinculos] = React.useState(null);
+  const [excluindoConta, setExcluindoConta] = React.useState(false);
+  const [erroExclusao, setErroExclusao] = React.useState('');
+
   const carregarContas = async () => {
     setCarregando(true);
     setErro('');
@@ -748,6 +755,14 @@ function TelaContas() {
     setModalAberto(false);
     setContaEmEdicao(null);
     setErroModal('');
+  };
+
+  const fecharModalExclusao = () => {
+    if (excluindoConta) return;
+    setModalExcluirAberto(false);
+    setContaParaExcluir(null);
+    setInfoVinculos(null);
+    setErroExclusao('');
   };
 
   const exibirSucesso = (msg) => {
@@ -797,7 +812,7 @@ function TelaContas() {
     try {
       const res = await window.api.patch(`/api/contas/${conta.id}/arquivar`);
       if (res && res.sucesso) {
-        exibirSucesso(res.mensagem || 'Conta arquivada.');
+        exibirSucesso(res.mensagem || 'Conta arquivada com sucesso.');
         carregarContas();
       } else {
         setErro((res && res.erro) || 'Erro ao arquivar conta.');
@@ -811,7 +826,7 @@ function TelaContas() {
     try {
       const res = await window.api.patch(`/api/contas/${conta.id}/reativar`);
       if (res && res.sucesso) {
-        exibirSucesso(res.mensagem || 'Conta reativada.');
+        exibirSucesso(res.mensagem || 'Conta reativada com sucesso.');
         carregarContas();
       } else {
         setErro((res && res.erro) || 'Erro ao reativar conta.');
@@ -822,18 +837,63 @@ function TelaContas() {
   };
 
   const handleExcluir = async (conta) => {
-    if (!window.confirm(`Tem certeza que deseja excluir permanentemente a conta "${conta.nome}"? Esta ação não pode ser desfeita.`)) return;
+    if (!window.confirm(`Tem certeza que deseja excluir a conta "${conta.nome}"?`)) return;
     try {
       const res = await window.api.delete(`/api/contas/${conta.id}`);
       if (res && res.sucesso) {
         exibirSucesso(res.mensagem || 'Conta excluída.');
         carregarContas();
       } else {
-        // Se tiver histórico, orienta o usuário a arquivar
         setErro((res && res.erro) || 'Não foi possível excluir a conta.');
       }
     } catch (err) {
-      setErro(err.message || 'Erro ao excluir conta.');
+      const dados = err.dados;
+      if (dados && dados.tem_vinculos) {
+        // Se possui informações vinculadas, abre modal com opção de excluir junto ou arquivar
+        setContaParaExcluir(conta);
+        setInfoVinculos(dados);
+        setErroExclusao('');
+        setModalExcluirAberto(true);
+      } else {
+        setErro(err.message || 'Erro ao excluir conta.');
+      }
+    }
+  };
+
+  const handleConfirmarExclusaoComVinculos = async () => {
+    if (!contaParaExcluir) return;
+    setExcluindoConta(true);
+    setErroExclusao('');
+    try {
+      const res = await window.api.delete(`/api/contas/${contaParaExcluir.id}?excluir_vinculados=true`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Conta e todas as informações vinculadas foram excluídas com sucesso.');
+        fecharModalExclusao();
+        carregarContas();
+      } else {
+        setErroExclusao((res && res.erro) || 'Erro ao excluir conta e vínculos.');
+      }
+    } catch (err) {
+      setErroExclusao(err.message || 'Erro de comunicação ao excluir conta e vínculos.');
+    } finally {
+      setExcluindoConta(false);
+    }
+  };
+
+  const handleArquivarDoModal = async () => {
+    if (!contaParaExcluir) return;
+    const conta = contaParaExcluir;
+    fecharModalExclusao();
+    try {
+      const res = await window.api.patch(`/api/contas/${conta.id}/arquivar`);
+      if (res && res.sucesso) {
+        exibirSucesso(res.mensagem || 'Conta arquivada com sucesso.');
+        carregarContas();
+      } else {
+        setErro((res && res.erro) || 'Erro ao arquivar conta.');
+      }
+    } catch (err) {
+      setErro(err.message || 'Erro ao arquivar conta.');
     }
   };
 
@@ -1020,6 +1080,66 @@ function TelaContas() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Modal de Exclusão de Carteira com Vínculos */}
+      {modalExcluirAberto && contaParaExcluir && (
+        <Modal
+          titulo={`Excluir Carteira: ${contaParaExcluir.nome}`}
+          onFechar={fecharModalExclusao}
+        >
+          {erroExclusao && <div className="alert alert-error">{erroExclusao}</div>}
+
+          <div className="modal-warning-box">
+            <div className="modal-warning-title">
+              ⚠️ Carteira com informações vinculadas
+            </div>
+            <p style={{ margin: '0 0 0.5rem 0' }}>
+              A carteira <strong>"{contaParaExcluir.nome}"</strong> possui{' '}
+              <strong>{infoVinculos?.total_lancamentos || 0} lançamento(s)</strong>
+              {infoVinculos?.total_recorrentes > 0 ? (
+                <> e <strong>{infoVinculos.total_recorrentes} modelo(s) fixo(s)</strong></>
+              ) : null}{' '}
+              vinculados que estão impedindo sua exclusão direta.
+            </p>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              Deseja excluir a carteira junto com todas as movimentações vinculadas? Caso queira preservar o histórico financeiro, você pode apenas arquivá-la.
+            </p>
+          </div>
+
+          <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={fecharModalExclusao}
+              disabled={excluindoConta}
+            >
+              Cancelar
+            </button>
+
+            {contaParaExcluir.status === 'ativo' && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleArquivarDoModal}
+                disabled={excluindoConta}
+                title="Preserva todo o histórico e inativa a carteira para novos lançamentos"
+              >
+                📦 Apenas Arquivar
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ background: 'var(--error)', borderColor: 'var(--error)', color: '#ffffff' }}
+              onClick={handleConfirmarExclusaoComVinculos}
+              disabled={excluindoConta}
+            >
+              {excluindoConta ? 'Excluindo tudo...' : '🗑️ Excluir Carteira e Vínculos'}
+            </button>
+          </div>
         </Modal>
       )}
     </div>

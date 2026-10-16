@@ -12,6 +12,8 @@ Todos os endpoints exigem autenticação e isolam dados por usuario_id.
 from flask import Blueprint, jsonify, request
 from app.models import db
 from app.models.conta import Conta
+from app.models.lancamento import Lancamento
+from app.models.lancamento_recorrente import LancamentoRecorrente
 from app.utils.auth import current_user, login_required, validar_posse
 
 contas_bp = Blueprint("contas", __name__, url_prefix="/api/contas")
@@ -219,37 +221,149 @@ def reativar_conta(conta_id):
 @contas_bp.route("/<int:conta_id>", methods=["DELETE"])
 @login_required
 def excluir_conta(conta_id):
-    """Exclui fisicamente uma conta, SOMENTE se não houver movimentações vinculadas.
+    """Exclui uma conta/carteira do usuário autenticado.
 
-    Se existirem lançamentos (ativos ou soft-deletados) ou recorrentes associados,
-    a exclusão é bloqueada e o sistema orienta o usuário a arquivar a conta.
+    Se a conta possuir movimentações vinculadas (lançamentos ou fixos recorrentes):
+    - Se 'excluir_vinculados' for informado (via query param ou corpo JSON),
+      exclui em transação atômica a conta e todas as informações vinculadas a ela.
+    - Se não for informado, bloqueia a exclusão direta e retorna os vínculos existentes,
+      oferecendo ao usuário a opção de exclusão conjunta ou arquivamento.
     """
     conta = db.session.get(Conta, conta_id)
 
     if not conta or not validar_posse(conta, "conta"):
         return jsonify({"sucesso": False, "erro": "Conta não encontrada ou acesso negado."}), 404
 
-    # Proteção de integridade: bloqueia exclusão se houver histórico vinculado
-    if conta.tem_movimentacoes():
+    # Parâmetro para exclusão em lote com vínculos (suporta query string ou JSON body)
+    dados = request.get_json(silent=True) or {}
+    excluir_vinculados_param = request.args.get("excluir_vinculados", "").lower() in ("true", "1", "sim")
+    excluir_vinculados_body = bool(dados.get("excluir_vinculados"))
+    excluir_vinculados = excluir_vinculados_param or excluir_vinculados_body
+
+    tem_mov = conta.tem_movimentacoes()
+
+    if tem_mov and not excluir_vinculados:
+        total_lancamentos = (
+            Lancamento.query
+            .filter(
+                Lancamento.usuario_id == current_user.id,
+                db.or_(
+                    Lancamento.conta_id == conta.id,
+                    Lancamento.conta_destino_id == conta.id,
+                ),
+            )
+            .count()
+        )
+        total_recorrentes = (
+            LancamentoRecorrente.query
+            .filter_by(usuario_id=current_user.id, conta_id=conta.id)
+            .count()
+        )
+
         return jsonify({
             "sucesso": False,
             "erro": (
-                f'A conta "{conta.nome}" possui movimentações registradas no histórico e não pode ser excluída. '
-                "Para descontinuá-la, utilize a opção de Arquivar."
+                f'A conta "{conta.nome}" possui movimentações registradas no histórico e não pode ser excluída diretamente.'
             ),
-            "acao_sugerida": "arquivar",
+            "tem_vinculos": True,
+            "total_lancamentos": total_lancamentos,
+            "total_recorrentes": total_recorrentes,
+            "acao_sugerida": "excluir_vinculados_ou_arquivar",
         }), 400
 
     nome_conta = conta.nome
 
     try:
+        total_lanc_excluidos = 0
+        total_rec_excluidos = 0
+
+        if tem_mov and excluir_vinculados:
+            # 1. Exclui todos os lançamentos vinculados (origem ou destino) do usuário
+            total_lanc_excluidos = (
+                Lancamento.query
+                .filter(
+                    Lancamento.usuario_id == current_user.id,
+                    db.or_(
+                        Lancamento.conta_id == conta.id,
+                        Lancamento.conta_destino_id == conta.id,
+                    ),
+                )
+                .delete(synchronize_session=False)
+            )
+
+            # 2. Exclui todos os modelos recorrentes vinculados à conta
+            total_rec_excluidos = (
+                LancamentoRecorrente.query
+                .filter_by(usuario_id=current_user.id, conta_id=conta.id)
+                .delete(synchronize_session=False)
+            )
+
         db.session.delete(conta)
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify({"sucesso": False, "erro": "Erro ao excluir conta. Tente novamente."}), 500
 
+    mensagem = (
+        f'Conta "{nome_conta}" e todas as informações vinculadas foram excluídas permanentemente.'
+        if tem_mov and excluir_vinculados
+        else f'Conta "{nome_conta}" excluída permanentemente.'
+    )
+
     return jsonify({
         "sucesso": True,
-        "mensagem": f'Conta "{nome_conta}" excluída permanentemente.',
+        "mensagem": mensagem,
+        "dados": {
+            "total_lancamentos_excluidos": total_lanc_excluidos,
+            "total_recorrentes_excluidos": total_rec_excluidos,
+        },
+    }), 200
+
+
+@contas_bp.route("/<int:conta_id>/excluir-com-vinculos", methods=["POST"])
+@login_required
+def excluir_conta_com_vinculos(conta_id):
+    """Endpoint alternativo POST para excluir a conta e todas as informações vinculadas em lote."""
+    conta = db.session.get(Conta, conta_id)
+
+    if not conta or not validar_posse(conta, "conta"):
+        return jsonify({"sucesso": False, "erro": "Conta não encontrada ou acesso negado."}), 404
+
+    nome_conta = conta.nome
+
+    try:
+        # 1. Exclui todos os lançamentos vinculados (origem ou destino) do usuário
+        total_lancamentos = (
+            Lancamento.query
+            .filter(
+                Lancamento.usuario_id == current_user.id,
+                db.or_(
+                    Lancamento.conta_id == conta.id,
+                    Lancamento.conta_destino_id == conta.id,
+                ),
+            )
+            .delete(synchronize_session=False)
+        )
+
+        # 2. Exclui todos os modelos recorrentes vinculados à conta
+        total_recorrentes = (
+            LancamentoRecorrente.query
+            .filter_by(usuario_id=current_user.id, conta_id=conta.id)
+            .delete(synchronize_session=False)
+        )
+
+        # 3. Exclui a conta
+        db.session.delete(conta)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"sucesso": False, "erro": "Erro ao excluir conta e vínculos. Tente novamente."}), 500
+
+    return jsonify({
+        "sucesso": True,
+        "mensagem": f'Conta "{nome_conta}" e todas as suas informações vinculadas foram excluídas com sucesso.',
+        "dados": {
+            "total_lancamentos_excluidos": total_lancamentos,
+            "total_recorrentes_excluidos": total_recorrentes,
+        },
     }), 200

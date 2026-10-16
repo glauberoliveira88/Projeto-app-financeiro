@@ -163,3 +163,14 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
 - **Solução aplicada:** Tratamento e reconstrução das imagens em formato PNG com canal alfa (RGBA, 32 bits), convertendo todo o plano externo e as contraformas internas das letras ('a', 'p', 'e') em transparência completa (alfa = 0), com desmatização do fundo e suavização de bordas por anti-aliasing preservando 100% da nitidez da tipografia e do símbolo da moeda/seta/folha em `app/static/img/` e `docs/`.
 - **Como evitar no futuro:** Assets de logomarca e ícones estáticos para aplicações web devem sempre ser exportados e validados no formato PNG com canal alfa (RGBA) e fundo 100% transparente, evitando fundos estáticos embutidos na imagem que impeçam a fusão perfeita com superfícies de layout dinâmicas.
 
+## 2026-10-16 - Bloqueio rígido ao excluir carteira com lançamentos vinculados sem opção de exclusão em cascata
+
+- **Sintoma:** Ao tentar excluir uma carteira com histórico ou modelos fixos vinculados, o sistema bloqueava a exclusão com mensagem de erro HTTP 400 exigindo arquivamento ou exclusão manual de cada lançamento individualmente, causando atrito ao usuário que desejava descartar a carteira e todas as suas movimentações de uma só vez.
+- **Causa:** A rota `DELETE /api/contas/<id>` continha bloqueio incondicional se `conta.tem_movimentacoes()` retornasse verdadeiro, e a interface frontend não apresentava modal com a opção de exclusão conjunta das informações vinculadas. Além disso, as constraints de chave estrangeira no MySQL possuem `ON DELETE RESTRICT`.
+- **Solução aplicada:**
+  1. No backend (`app/controllers/contas_controller.py`): o endpoint `DELETE /api/contas/<id>` passou a aceitar o parâmetro `excluir_vinculados`. Quando ausente e havendo vínculos, retorna resposta estruturada informando o total de lançamentos e modelos fixos vinculados; quando ativo (ou via endpoint `POST /api/contas/<id>/excluir-com-vinculos`), executa transação atômica que deleta todos os lançamentos vinculados (onde a conta é origem ou destino), os modelos recorrentes da conta e a própria carteira.
+  2. No frontend (`app/static/js/app.js`): implementado modal de confirmação no padrão Obsidian para exclusão de carteira com informações vinculadas, informando ao usuário os lançamentos e fixos vinculados e permitindo escolher entre "Cancelar", "📦 Apenas Arquivar" e "🗑️ Excluir Carteira e Vínculos".
+  3. Atualização da suíte de testes unitários (`tests/test_fase6_contas.py`) cobrindo 100% dos cenários de exclusão direta, bloqueio informativo e exclusão com vínculos em lote.
+- **Como evitar no futuro:** Em regras de integridade referencial que impeçam exclusão direta, sempre fornecer à interface opções claras de resolução em lote (como exclusão conjunta confirmada ou arquivamento), sem forçar o usuário a limpezas manuais exaustivas item a item.
+
+
