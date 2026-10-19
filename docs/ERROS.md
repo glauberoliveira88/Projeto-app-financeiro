@@ -173,4 +173,18 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
   3. Atualização da suíte de testes unitários (`tests/test_fase6_contas.py`) cobrindo 100% dos cenários de exclusão direta, bloqueio informativo e exclusão com vínculos em lote.
 - **Como evitar no futuro:** Em regras de integridade referencial que impeçam exclusão direta, sempre fornecer à interface opções claras de resolução em lote (como exclusão conjunta confirmada ou arquivamento), sem forçar o usuário a limpezas manuais exaustivas item a item.
 
+## 2026-10-18 - Contraste invertido no botão de exclusão de lançamento e cor verde indevida para saldo zero na tela de lançamentos
+
+- **Sintoma:**
+  1. No modal de confirmação de exclusão de lançamento na tela de Lançamentos, o botão de confirmação exibia texto vermelho sob fundo violeta (`btn btn-primary btn-danger`), com contraste desarmônico e texto ilegível, idêntico ao incidente registrado em 2026-10-06 para a tela de fixos recorrentes.
+  2. No card de resumo "Saldo do Período" na tela de Lançamentos, quando o saldo resultava exatamente em R$ 0,00, o valor era exibido em verde com classe `.valor-receita` e subtítulo "Resultado positivo", em vez de cor neutra (branco no tema escuro e preto no tema claro).
+- **Causa:**
+  1. Aplicação concorrente da classe utilitária `.btn-danger` sobre `.btn-primary` sobrescrevendo a cor do texto com `color: var(--error) !important`, anulando o chaveamento natural de `--primary-contrast`.
+  2. Condição booleana `>= 0` no cálculo da classe e do subtítulo (`resumo.saldo_periodo >= 0 ? 'valor-receita' : 'valor-despesa'`), tratando zero como saldo positivo.
+- **Solução aplicada:**
+  1. Remoção da classe conflitante `.btn-danger` e padronização do botão primário como `btn btn-primary` com o texto com emoji de alerta `⚠️ Confirmar Exclusão` em `app/static/js/app.js` (alinhado ao padrão da tela de fixos recorrentes).
+  2. Implementação de lógica ternária tripla em `app/static/js/app.js` (`resumo.saldo_periodo > 0 ? 'valor-receita' : resumo.saldo_periodo < 0 ? 'valor-despesa' : 'valor-saldo-zero'`) e subtítulo neutro ("Resultado neutro" quando zero).
+  3. Criação da classe `.valor-saldo-zero` em `app/static/css/style.css` com cor branca `#ffffff` no tema escuro e preta `#09090b` sob `[data-theme="light"]` e `body.light-theme`.
+- **Como evitar no futuro:** Sempre utilizar a classe canônica `.btn.btn-primary` em botões de confirmação de exclusão em modais sem misturar com `.btn-danger`; e sempre verificar estados neutros (zero) em comparadores de saldo com lógica tripla (> 0, < 0 e == 0), assegurando que o neutro tenha suporte explícito nos dois temas.
+
 

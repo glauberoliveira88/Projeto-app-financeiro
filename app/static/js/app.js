@@ -2574,11 +2574,11 @@ function TelaLancamentos() {
 
         <div className="lancamentos-summary-card">
           <span className="summary-card-label">Saldo do Período</span>
-          <span className={`summary-card-value ${resumo.saldo_periodo >= 0 ? 'valor-receita' : 'valor-despesa'}`}>
+          <span className={`summary-card-value ${resumo.saldo_periodo > 0 ? 'valor-receita' : resumo.saldo_periodo < 0 ? 'valor-despesa' : 'valor-saldo-zero'}`}>
             {formatarMoeda(resumo.saldo_periodo)}
           </span>
           <span className="summary-card-meta">
-            {resumo.saldo_periodo >= 0 ? 'Resultado positivo' : 'Atenção ao déficit'}
+            {resumo.saldo_periodo > 0 ? 'Resultado positivo' : resumo.saldo_periodo < 0 ? 'Atenção ao déficit' : 'Resultado neutro'}
           </span>
         </div>
 
@@ -3300,11 +3300,11 @@ function TelaLancamentos() {
             </button>
             <button
               type="button"
-              className="btn btn-primary btn-danger"
+              className="btn btn-primary"
               onClick={executarExclusao}
               disabled={excluindo}
             >
-              {excluindo ? 'Excluindo...' : 'Sim, Excluir Lançamento'}
+              {excluindo ? 'Excluindo...' : '⚠️ Confirmar Exclusão'}
             </button>
           </div>
         </Modal>

@@ -1,7 +1,7 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-16 (Implementação de exclusão de carteiras com informações vinculadas em cascata e modal informativo/destrutivo de confirmação na TelaContas)
-* **Fase atual:** Fase 10 concluída e calibrada; Módulo de Contas/Carteiras aprimorado com exclusão conjunta de vínculos
+* **Última atualização:** 2026-10-18 (Correção do contraste no botão de exclusão de lançamentos e cor neutra dinâmica para saldo zero no resumo de TelaLancamentos)
+* **Fase atual:** Fase 10 concluída e calibrada; Telas de Contas e Lançamentos alinhadas com padrões de UX e contraste Obsidian
 * **Próximo passo recomendado:** Iniciar a Fase 11 (Módulo de Configurações, Perfil e Alternância de Tema)
 
 ---
@@ -106,6 +106,7 @@
 - [x] Implementar operações de receitas, despesas e transferências entre contas (com validações de isolamento por `usuario_id`, preenchimento automático de vencimento/status em transferências e alerta de saldo insuficiente);
 - [x] Implementar exclusão lógica via soft delete (`deleted_at`) e recálculo dinâmico de saldos contábeis;
 - [x] Construir componentes React de listagem, navegação de período mensal, filtros rápidos, busca instantânea, badges de status e formulário modal com abas [Despesa | Receita | Transferência] e stepper de R$ 1,00;
+- [x] Refinar UI/UX da tela de Lançamentos: padronização do botão de exclusão com `btn-primary` e emoji de alerta ("⚠️ Confirmar Exclusão"), eliminando sobreposição conflitante de `.btn-danger`, e exibição de saldo zero com cor neutra dinâmica (branco no escuro, preto no claro) e subtítulo "Resultado neutro";
 - [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase8_lancamentos.py`).
 
 ---

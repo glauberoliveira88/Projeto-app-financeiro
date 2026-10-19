@@ -1320,6 +1320,17 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.valor-saldo-zero {
+  color: #ffffff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="light"] .valor-saldo-zero,
+body.light-theme .valor-saldo-zero {
+  color: #09090b;
+}
+
 /* Badges de Status de Liquidação */
 .badge-status {
   display: inline-flex;
