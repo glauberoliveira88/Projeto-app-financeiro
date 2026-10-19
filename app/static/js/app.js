@@ -11,6 +11,10 @@ const AppContext = createContext(null);
 
 function AppProvider({ children }) {
   const [tema, setTema] = useState(() => {
+    const attrTheme = document.documentElement.getAttribute('data-theme');
+    if (attrTheme === 'light' || attrTheme === 'dark') {
+      return attrTheme;
+    }
     return localStorage.getItem('financas_tema') || 'dark';
   });
 
@@ -18,7 +22,20 @@ function AppProvider({ children }) {
   const [carregando, setCarregando] = useState(true);
   const [rotaAtual, setRotaAtual] = useState(window.location.pathname);
 
-  // Sincroniza tema visual com DOM
+  // Aplica o tema visual no DOM e no localStorage sem persistência em API
+  const aplicarTemaLocal = (novoTema) => {
+    const temaValido = novoTema === 'light' ? 'light' : 'dark';
+    setTema(temaValido);
+    localStorage.setItem('financas_tema', temaValido);
+    document.documentElement.setAttribute('data-theme', temaValido);
+    if (temaValido === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  };
+
+  // Sincroniza tema visual com DOM caso o estado mude
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', tema);
     if (tema === 'light') {
@@ -29,10 +46,10 @@ function AppProvider({ children }) {
     localStorage.setItem('financas_tema', tema);
   }, [tema]);
 
+  // Função para alteração manual pelo usuário com persistência no banco de dados
   const definirTema = async (novoTema) => {
     if (novoTema !== 'dark' && novoTema !== 'light') return;
-    setTema(novoTema);
-    localStorage.setItem('financas_tema', novoTema);
+    aplicarTemaLocal(novoTema);
 
     // Se o usuário estiver autenticado, persiste no banco de dados via API
     if (usuario) {
@@ -55,16 +72,31 @@ function AppProvider({ children }) {
     ? '/static/img/logo_tema_claro.png' 
     : '/static/img/logo_tema_escuro.png';
 
-  // Verifica sessão ativa ao carregar
+  // Atualiza o estado do usuário e aplica imediatamente o tema preferido registrado no banco
+  const definirUsuario = (novoUsuario) => {
+    if (typeof novoUsuario === 'function') {
+      setUsuario((prev) => {
+        const atualizado = novoUsuario(prev);
+        if (atualizado && atualizado.tema_preferido) {
+          aplicarTemaLocal(atualizado.tema_preferido);
+        }
+        return atualizado;
+      });
+    } else {
+      setUsuario(novoUsuario);
+      if (novoUsuario && novoUsuario.tema_preferido) {
+        aplicarTemaLocal(novoUsuario.tema_preferido);
+      }
+    }
+  };
+
+  // Verifica sessão ativa ao carregar e prioriza o tema favorito do banco do usuário logado
   const verificarSessao = async () => {
     try {
       const res = await window.api.get('/api/auth/sessao');
       const usuarioAtivo = res && (res.usuario || (res.dados && res.dados.usuario));
       if (res && res.sucesso && res.autenticado && usuarioAtivo) {
-        setUsuario(usuarioAtivo);
-        if (usuarioAtivo.tema_preferido && !localStorage.getItem('financas_tema')) {
-          setTema(usuarioAtivo.tema_preferido);
-        }
+        definirUsuario(usuarioAtivo);
       } else {
         setUsuario(null);
       }
@@ -107,9 +139,10 @@ function AppProvider({ children }) {
         tema,
         definirTema,
         alternarTema,
+        aplicarTemaLocal,
         logoSrc,
         usuario,
-        setUsuario,
+        setUsuario: definirUsuario,
         carregando,
         rotaAtual,
         navegar,

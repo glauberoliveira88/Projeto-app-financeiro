@@ -187,4 +187,15 @@ Utilize o padrão abaixo para cadastrar novos incidentes:
   3. Criação da classe `.valor-saldo-zero` em `app/static/css/style.css` com cor branca `#ffffff` no tema escuro e preta `#09090b` sob `[data-theme="light"]` e `body.light-theme`.
 - **Como evitar no futuro:** Sempre utilizar a classe canônica `.btn.btn-primary` em botões de confirmação de exclusão em modais sem misturar com `.btn-danger`; e sempre verificar estados neutros (zero) em comparadores de saldo com lógica tripla (> 0, < 0 e == 0), assegurando que o neutro tenha suporte explícito nos dois temas.
 
+## 2026-10-18 - Tema preferido salvo no banco ignorado pelo frontend pós-login devido a cache em localStorage
+
+- **Sintoma:** Ao definir um tema favorito (ex: Claro), encerrar a sessão, alterar o tema no seletor da tela de login (ex: para Escuro) e efetuar login novamente, a interface carregava com o tema da tela de login (Escuro), ignorando a preferência salva no banco de dados para o usuário autenticado.
+- **Causa:** O handler de login (`TelaLogin`) e o de cadastro (`TelaCadastro`) apenas atualizavam o estado do usuário (`setUsuario`) e redirecionavam para o dashboard (`navegar('/dashboard')`) sem sincronizar o tema ativo na aplicação nem no `localStorage`. Além disso, a função de inicialização `verificarSessao` continha a condição `if (usuarioAtivo.tema_preferido && !localStorage.getItem('financas_tema'))`, o que impedia que a preferência do usuário cadastrada no banco sobrescrevesse qualquer valor preexistente gravado no `localStorage` do navegador.
+- **Solução aplicada:**
+  1. No frontend (`app/static/js/app.js`): implementada a função `definirUsuario` no `AppProvider`, que intercepta a atribuição do usuário autenticado e sincroniza imediatamente o tema visual com `aplicarTemaLocal(usuario.tema_preferido)`, atualizando o estado do React, o `localStorage` e os atributos do DOM (`data-theme` no `<html>` e classes no `<body>`) antes da transição para o dashboard.
+  2. Em `verificarSessao` (`app/static/js/app.js`): removida a restrição `!localStorage.getItem('financas_tema')`, assegurando que, havendo usuário autenticado, a preferência vinda do banco de dados seja sempre a fonte da verdade prioritária.
+  3. No backend (`app/__init__.py` e `app/templates/index.html`): injetado `current_user` no `context_processor` do Flask e adicionada renderização de `data-theme="{{ current_user.tema_preferido }}"` com script inline no `<head>` para sincronização instantânea em recarregamentos diretos de página, eliminando FOUC (flash de tema incorreto).
+  4. Ampliada a suíte `tests/test_fase11_configuracoes.py` com testes cobrindo o retorno de `tema_preferido` nos endpoints de autenticação e a injeção do tema preferido no HTML renderizado pelo servidor.
+- **Como evitar no futuro:** Sempre que preferências do usuário forem persistidas em banco de dados relacional, o dado retornado pelo backend nas rotas de autenticação/sessão deve ser tratado como autoritativo, sobrepondo imediatamente estados locais temporários ou de visitantes deslogados no frontend.
+
 

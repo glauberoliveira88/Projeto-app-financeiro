@@ -135,7 +135,9 @@
 - [x] Implementar alternância de tema no frontend com persistência simultânea em `localStorage` e no banco de dados via API assíncrona;
 - [x] Sincronizar alternância das imagens dos logotipos (`logo_tema_escuro.png` e `logo_tema_claro.png`) no cabeçalho e na barra lateral;
 - [x] Construir interface completa de configurações em `app/static/js/app.js` (`TelaConfiguracoes`) com cartões visuais para seleção de temas Obsidian e Claro, edição de perfil, exibição de tipo de conta (Tradicional ou Google OAuth) e painel de segurança/sessão;
-- [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase11_configuracoes.py`).
+- [x] Corrigir sincronização do tema preferido pós-login: garantir que o frontend consulte e aplique imediatamente o tema favorito registrado no banco de dados para o usuário autenticado, sobrepondo qualquer tema temporário selecionado na tela de login ou em `localStorage`;
+- [x] Injetar tema preferido do usuário autenticado no HTML pelo servidor e adicionar script de prevenção de FOUC e auto-sincronização no cabeçalho;
+- [x] Criar e expandir suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase11_configuracoes.py`).
 
 ---
 

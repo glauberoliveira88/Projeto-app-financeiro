@@ -180,6 +180,46 @@ class ConfiguracoesTestCase(unittest.TestCase):
         self.assertEqual(res_u2.status_code, 200)
         self.assertEqual(res_u2.get_json()["dados"]["nome"], "Carlos Souza")
 
+    def test_09_tema_preferido_retornado_em_login_e_sessao(self):
+        """Endpoints /api/auth/login e /api/auth/sessao devem retornar tema_preferido do usuário."""
+        # Login tradicional
+        res_login = self.client.post("/api/auth/login", json={"email": "carlos@teste.com", "senha": "SenhaForte123"})
+        self.assertEqual(res_login.status_code, 200)
+        dados_login = res_login.get_json()
+        self.assertTrue(dados_login["sucesso"])
+        self.assertEqual(dados_login["usuario"]["tema_preferido"], "light")
+
+        # Consulta de sessão ativa
+        res_sessao = self.client.get("/api/auth/sessao")
+        self.assertEqual(res_sessao.status_code, 200)
+        dados_sessao = res_sessao.get_json()
+        self.assertTrue(dados_sessao["autenticado"])
+        self.assertEqual(dados_sessao["usuario"]["tema_preferido"], "light")
+
+    def test_10_renderizacao_html_injeta_tema_preferido_do_usuario(self):
+        """O servidor deve injetar data-theme='light' no html para usuário logado com preferência light."""
+        # 1. Usuário não autenticado -> padrão 'dark'
+        res_anon = self.client.get("/")
+        self.assertEqual(res_anon.status_code, 200)
+        html_anon = res_anon.get_data(as_text=True)
+        self.assertIn('data-theme="dark"', html_anon)
+        self.assertNotIn('light-theme', html_anon.split("<head>")[0])
+
+        # 2. Usuário 2 autenticado (preferência 'light')
+        self.autenticar(self.user2)
+        res_auth = self.client.get("/dashboard")
+        self.assertEqual(res_auth.status_code, 200)
+        html_auth = res_auth.get_data(as_text=True)
+        self.assertIn('data-theme="light"', html_auth)
+        self.assertIn('class="light-theme"', html_auth)
+
+    def test_11_script_sincronizacao_tema_presente_no_html(self):
+        """O template index.html deve conter o script de sincronização de tema no head."""
+        res = self.client.get("/")
+        html = res.get_data(as_text=True)
+        self.assertIn("financas_tema", html)
+        self.assertIn("serverTheme", html)
+
 
 if __name__ == "__main__":
     unittest.main()

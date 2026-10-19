@@ -43,10 +43,14 @@ def create_app(config_class=Config):
     registrar_error_handlers(app)
 
     # 5. Contexto de Sessão e Usuário Autenticado (Fase 4)
-    from app.utils.auth import obter_usuario_atual
+    from app.utils.auth import obter_usuario_atual, current_user
     @app.before_request
     def carregar_usuario():
         obter_usuario_atual()
+
+    @app.context_processor
+    def inject_context():
+        return dict(current_user=current_user)
 
     # 6. Registro de Blueprints / Controllers
     from app.controllers import (

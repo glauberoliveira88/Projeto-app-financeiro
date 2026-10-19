@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="{{ current_user.tema_preferido if current_user and current_user.is_authenticated and current_user.tema_preferido else 'dark' }}"{% if current_user and current_user.is_authenticated and current_user.tema_preferido == 'light' %} class="light-theme"{% endif %}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,28 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <title>FinançasSimples — Controle Financeiro Pessoal</title>
+
+  <!-- Script Inline para prevenção de FOUC e sincronização imediata do tema preferido -->
+  <script>
+    (function() {
+      var serverTheme = document.documentElement.getAttribute('data-theme');
+      var authUser = {{ 'true' if current_user and current_user.is_authenticated else 'false' }};
+      if (authUser && (serverTheme === 'light' || serverTheme === 'dark')) {
+        try { localStorage.setItem('financas_tema', serverTheme); } catch(e) {}
+      } else {
+        try {
+          var localTheme = localStorage.getItem('financas_tema');
+          if (localTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.classList.add('light-theme');
+          } else if (localTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.remove('light-theme');
+          }
+        } catch(e) {}
+      }
+    })();
+  </script>
 
   <!-- Tipografia Oficial Geist (docs/DESIGN.md) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
