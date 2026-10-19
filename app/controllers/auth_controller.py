@@ -278,6 +278,7 @@ def api_sessao():
         return jsonify({
             "sucesso": True,
             "autenticado": True,
+            "usuario": user.to_dict(),
             "dados": {
                 "usuario": user.to_dict(),
             },

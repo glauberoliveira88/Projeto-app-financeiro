@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-18 (Correção do contraste no botão de exclusão de lançamentos e cor neutra dinâmica para saldo zero no resumo de TelaLancamentos)
-* **Fase atual:** Fase 10 concluída e calibrada; Telas de Contas e Lançamentos alinhadas com padrões de UX e contraste Obsidian
-* **Próximo passo recomendado:** Iniciar a Fase 11 (Módulo de Configurações, Perfil e Alternância de Tema)
+* **Última atualização:** 2026-10-18 (Conclusão da Fase 11 — Módulo de Configurações, Perfil e Alternância de Tema)
+* **Fase atual:** Fase 11 concluída com 100% de aprovação nos testes automatizados
+* **Próximo passo recomendado:** Iniciar a Fase 12 (Revisão de Segurança, Testes Locais, Validação Final e Preparação para Deploy)
 
 ---
 
@@ -20,7 +20,7 @@
 | **Fase 8** | Módulo de Lançamentos (Receitas, Despesas, Transferências e Soft Delete) | **Concluída** |
 | **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | **Concluída** |
 | **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | **Concluída** |
-| **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | Pendente |
+| **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | **Concluída** |
 | **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | Pendente |
 
 
@@ -131,9 +131,11 @@
 ---
 
 ### Fase 11 — Módulo de Configurações, Perfil e Alternância de Tema
-- [ ] Implementar `app/controllers/configuracoes_controller.py`;
-- [ ] Implementar alternância de tema no frontend e persistência no banco e `localStorage`;
-- [ ] Sincronizar alternância das imagens dos logotipos (`logo_tema_escuro.png` e `logo_tema_claro.png`).
+- [x] Implementar `app/controllers/configuracoes_controller.py` com endpoints `GET /api/usuario/perfil` (consulta segura de dados cadastrais), `PUT/PATCH /api/usuario/perfil` (atualização com validação de 2 a 150 caracteres e sanitização HTML contra XSS) e `PATCH /api/usuario/tema` (persistência estrita de 'dark' ou 'light');
+- [x] Implementar alternância de tema no frontend com persistência simultânea em `localStorage` e no banco de dados via API assíncrona;
+- [x] Sincronizar alternância das imagens dos logotipos (`logo_tema_escuro.png` e `logo_tema_claro.png`) no cabeçalho e na barra lateral;
+- [x] Construir interface completa de configurações em `app/static/js/app.js` (`TelaConfiguracoes`) com cartões visuais para seleção de temas Obsidian e Claro, edição de perfil, exibição de tipo de conta (Tradicional ou Google OAuth) e painel de segurança/sessão;
+- [x] Criar suíte de testes unitários e de integração automatizados com 100% de aprovação (`tests/test_fase11_configuracoes.py`).
 
 ---
 

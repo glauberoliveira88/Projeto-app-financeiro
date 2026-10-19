@@ -221,14 +221,15 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Disponibilizar visualização de perfil do usuário e alternador instantâneo entre temas de alto contraste (*High-Contrast Dark* oficial e tema claro correspondente), sincronizando o logotipo dinamicamente.
 * **Checklist de tarefas:**
-  - [ ] Criar `app/controllers/configuracoes_controller.py`:
+  - [x] Criar `app/controllers/configuracoes_controller.py`:
     - `GET /api/usuario/perfil` (exibição de nome e e-mail);
+    - `PUT /api/usuario/perfil` (atualização e sanitização de nome);
     - `PATCH /api/usuario/tema` (persistência da preferência `dark` ou `light` na tabela `usuarios`);
-  - [ ] Implementar alternância de tema no frontend com persistência simultânea em `localStorage` e no banco;
-  - [ ] Alternar dinamicamente a imagem do logotipo: `logo_tema_escuro.png` (tema escuro) e `logo_tema_claro.png` (tema claro);
-  - [ ] Validar conformidade de contraste conforme o `docs/DESIGN.md`.
+  - [x] Implementar alternância de tema no frontend com persistência simultânea em `localStorage` e no banco;
+  - [x] Alternar dinamicamente a imagem do logotipo: `logo_tema_escuro.png` (tema escuro) e `logo_tema_claro.png` (tema claro);
+  - [x] Validar conformidade de contraste conforme o `docs/DESIGN.md`.
 * **Critérios de pronto:** Tema alternável fluidamente sem quebra de contraste, persistido entre recarregamentos e dispositivos.
-* **Arquivos e pastas alterados:** `app/controllers/configuracoes_controller.py`, `app/static/js/`, `app/static/css/style.css`.
+* **Arquivos e pastas alterados:** `app/controllers/configuracoes_controller.py`, `app/controllers/__init__.py`, `app/__init__.py`, `app/static/js/app.js`, `app/static/css/style.css`, `tests/test_fase11_configuracoes.py`.
 * **Dependências:** Fase 5 e Fase 10 concluídas.
 
 ---

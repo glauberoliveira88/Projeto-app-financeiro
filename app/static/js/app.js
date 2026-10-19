@@ -29,8 +29,25 @@ function AppProvider({ children }) {
     localStorage.setItem('financas_tema', tema);
   }, [tema]);
 
+  const definirTema = async (novoTema) => {
+    if (novoTema !== 'dark' && novoTema !== 'light') return;
+    setTema(novoTema);
+    localStorage.setItem('financas_tema', novoTema);
+
+    // Se o usuário estiver autenticado, persiste no banco de dados via API
+    if (usuario) {
+      try {
+        await window.api.patch('/api/usuario/tema', { tema: novoTema });
+        setUsuario((prev) => (prev ? { ...prev, tema_preferido: novoTema } : prev));
+      } catch (err) {
+        console.warn('Não foi possível persistir o tema no servidor:', err);
+      }
+    }
+  };
+
   const alternarTema = () => {
-    setTema((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    const proximoTema = tema === 'dark' ? 'light' : 'dark';
+    definirTema(proximoTema);
   };
 
   // Caminho dinâmico do logotipo oficial conforme o tema
@@ -42,10 +59,11 @@ function AppProvider({ children }) {
   const verificarSessao = async () => {
     try {
       const res = await window.api.get('/api/auth/sessao');
-      if (res && res.sucesso && res.autenticado) {
-        setUsuario(res.usuario);
-        if (res.usuario.tema_preferido && !localStorage.getItem('financas_tema')) {
-          setTema(res.usuario.tema_preferido);
+      const usuarioAtivo = res && (res.usuario || (res.dados && res.dados.usuario));
+      if (res && res.sucesso && res.autenticado && usuarioAtivo) {
+        setUsuario(usuarioAtivo);
+        if (usuarioAtivo.tema_preferido && !localStorage.getItem('financas_tema')) {
+          setTema(usuarioAtivo.tema_preferido);
         }
       } else {
         setUsuario(null);
@@ -87,6 +105,7 @@ function AppProvider({ children }) {
     <AppContext.Provider
       value={{
         tema,
+        definirTema,
         alternarTema,
         logoSrc,
         usuario,
@@ -4787,15 +4806,309 @@ function TelaRecorrentes() {
 }
 
 function TelaConfiguracoes() {
+  const { usuario, setUsuario, tema, definirTema, logout } = useApp();
+  const [nome, setNome] = useState(usuario ? usuario.nome || '' : '');
+  const [salvandoNome, setSalvandoNome] = useState(false);
+  const [sucessoNome, setSucessoNome] = useState('');
+  const [erroNome, setErroNome] = useState('');
+  const [perfilDetalhes, setPerfilDetalhes] = useState(usuario || {});
+  const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+
+  // Sincroniza dados atualizados do perfil ao abrir a tela
+  useEffect(() => {
+    let ativo = true;
+    const carregarPerfil = async () => {
+      setCarregandoPerfil(true);
+      try {
+        const res = await window.api.get('/api/usuario/perfil');
+        if (ativo && res && res.sucesso && res.dados) {
+          setPerfilDetalhes(res.dados);
+          if (res.dados.nome) {
+            setNome(res.dados.nome);
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar dados do perfil:', err);
+      } finally {
+        if (ativo) setCarregandoPerfil(false);
+      }
+    };
+    carregarPerfil();
+    return () => { ativo = false; };
+  }, []);
+
+  const handleSalvarNome = async (e) => {
+    e.preventDefault();
+    setSucessoNome('');
+    setErroNome('');
+
+    const nomeTrim = (nome || '').trim();
+    if (nomeTrim.length < 2) {
+      setErroNome('O nome deve conter pelo menos 2 caracteres.');
+      return;
+    }
+    if (nomeTrim.length > 150) {
+      setErroNome('O nome não pode exceder 150 caracteres.');
+      return;
+    }
+
+    setSalvandoNome(true);
+    try {
+      const res = await window.api.put('/api/usuario/perfil', { nome: nomeTrim });
+      if (res && res.sucesso) {
+        const dadosAtualizados = res.dados || res.usuario;
+        setSucessoNome('Dados do perfil atualizados com sucesso!');
+        if (dadosAtualizados) {
+          setPerfilDetalhes(dadosAtualizados);
+          setUsuario((prev) => (prev ? { ...prev, ...dadosAtualizados } : dadosAtualizados));
+        }
+      } else {
+        setErroNome((res && res.erro) || 'Não foi possível atualizar o perfil.');
+      }
+    } catch (err) {
+      setErroNome(err.message || 'Erro de comunicação ao salvar perfil.');
+    } finally {
+      setSalvandoNome(false);
+    }
+  };
+
+  const formatarDataCadastro = (isoStr) => {
+    if (!isoStr) return 'Cadastrado recentemente';
+    try {
+      const d = new Date(isoStr);
+      return `Membro desde ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+    } catch (e) {
+      return 'Membro ativo';
+    }
+  };
+
+  const isGoogle = perfilDetalhes.is_google_user || (usuario && usuario.is_google_user);
+
   return (
     <div className="module-container">
       <div className="module-header">
-        <div><h2 className="module-title">Configurações</h2></div>
+        <div>
+          <h2 className="module-title">Configurações &amp; Perfil</h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+            Personalize a aparência do sistema e gerencie as informações da sua conta.
+          </p>
+        </div>
       </div>
-      <div className="empty-state">
-        <div className="empty-icon">⚙️</div>
-        <p className="empty-title">Módulo em construção</p>
-        <p className="empty-subtitle">Será implementado na Fase 11.</p>
+
+      <div className="config-grid">
+        {/* ================================================================== */}
+        {/* 1. SEÇÃO DE APARÊNCIA E SELETOR DE TEMA                            */}
+        {/* ================================================================== */}
+        <section className="config-card">
+          <div className="config-card-header">
+            <div>
+              <h3 className="config-card-title">
+                <span>🎨</span> Aparência &amp; Tema Visual
+              </h3>
+              <p className="config-card-subtitle">
+                Alterne fluidamente entre temas de alto contraste. Sua preferência é sincronizada no seu dispositivo e na sua conta.
+              </p>
+            </div>
+          </div>
+
+          <div className="theme-picker-grid">
+            {/* Opção: Tema Escuro (Obsidian) */}
+            <button
+              type="button"
+              className={`theme-option-card ${tema === 'dark' ? 'active' : ''}`}
+              onClick={() => definirTema('dark')}
+              aria-pressed={tema === 'dark'}
+            >
+              <div className="theme-card-top">
+                <div className="theme-card-title">
+                  <span>🌙</span> Tema Escuro (Obsidian)
+                </div>
+                {tema === 'dark' && <span className="theme-badge-active">Ativo</span>}
+              </div>
+              <p className="theme-card-desc">
+                Padrão oficial FinançasSimples ("Precisão na Escuridão"): superfícies zinc profundas, tipografia Geist e acentos em violeta suave.
+              </p>
+              <div className="theme-preview-box dark-preview">
+                <span className="theme-swatch" style={{ background: '#09090b', border: '1px solid #27272a' }}></span>
+                <span className="theme-swatch" style={{ background: '#121215' }}></span>
+                <span className="theme-swatch" style={{ background: '#a78bfa' }}></span>
+                <span className="theme-swatch" style={{ background: '#34d399' }}></span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.6875rem', color: '#a1a1aa' }}>#09090b</span>
+              </div>
+            </button>
+
+            {/* Opção: Tema Claro */}
+            <button
+              type="button"
+              className={`theme-option-card ${tema === 'light' ? 'active' : ''}`}
+              onClick={() => definirTema('light')}
+              aria-pressed={tema === 'light'}
+            >
+              <div className="theme-card-top">
+                <div className="theme-card-title">
+                  <span>☀️</span> Tema Claro
+                </div>
+                {tema === 'light' && <span className="theme-badge-active">Ativo</span>}
+              </div>
+              <p className="theme-card-desc">
+                Variação luminosa e sóbria: superfícies claras em zinc funcional, tipografia de alto contraste e acentos violeta preservados.
+              </p>
+              <div className="theme-preview-box light-preview">
+                <span className="theme-swatch" style={{ background: '#ffffff', border: '1px solid #e4e4e7' }}></span>
+                <span className="theme-swatch" style={{ background: '#f4f4f5' }}></span>
+                <span className="theme-swatch" style={{ background: '#7c3aed' }}></span>
+                <span className="theme-swatch" style={{ background: '#059669' }}></span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.6875rem', color: '#52525b' }}>#ffffff</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* 2. SEÇÃO DE DADOS CADASTRAIS / PERFIL                              */}
+        {/* ================================================================== */}
+        <section className="config-card">
+          <div className="config-card-header">
+            <div>
+              <h3 className="config-card-title">
+                <span>👤</span> Dados da Conta &amp; Perfil
+              </h3>
+              <p className="config-card-subtitle">
+                Atualize o seu nome de exibição e confira os dados vinculados à sua conta.
+              </p>
+            </div>
+            <div>
+              {isGoogle ? (
+                <span className="badge-provider google" title="Autenticado com conta Google">
+                  <svg width="12" height="12" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  Google OAuth
+                </span>
+              ) : (
+                <span className="badge-provider local" title="Autenticado com e-mail e senha">
+                  🔑 Conta Padrão
+                </span>
+              )}
+            </div>
+          </div>
+
+          {sucessoNome && (
+            <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
+              ✓ {sucessoNome}
+            </div>
+          )}
+          {erroNome && (
+            <div className="alert alert-error" style={{ marginBottom: '1.25rem' }}>
+              ✕ {erroNome}
+            </div>
+          )}
+
+          <form onSubmit={handleSalvarNome}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="config-nome">
+                Nome Completo
+              </label>
+              <input
+                id="config-nome"
+                type="text"
+                required
+                className="form-input"
+                placeholder="Seu nome completo"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={salvandoNome}
+                maxLength={150}
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Como você deseja ser chamado no painel e nos cumprimentos do sistema.
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="config-email">
+                Endereço de E-mail
+              </label>
+              <input
+                id="config-email"
+                type="email"
+                readOnly
+                disabled
+                className="form-input config-readonly-input"
+                value={perfilDetalhes.email || (usuario ? usuario.email : '')}
+                title="O endereço de e-mail é o identificador único da sua conta e não pode ser alterado diretamente."
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Identificador único e seguro da conta ({formatarDataCadastro(perfilDetalhes.created_at)}).
+              </span>
+            </div>
+
+            <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-start' }}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={salvandoNome || (nome || '').trim() === (usuario ? usuario.nome : '')}
+              >
+                {salvandoNome ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* ================================================================== */}
+        {/* 3. SEÇÃO DE SEGURANÇA E ENCERRAMENTO DE SESSÃO                     */}
+        {/* ================================================================== */}
+        <section className="config-card">
+          <div className="config-card-header">
+            <div>
+              <h3 className="config-card-title">
+                <span>🛡️</span> Segurança da Conta &amp; Sessão
+              </h3>
+              <p className="config-card-subtitle">
+                Mecanismos de defesa e salvaguarda ativos no FinançasSimples.
+              </p>
+            </div>
+          </div>
+
+          <div className="security-info-box">
+            <p><strong>Diretrizes de proteção ativas nesta sessão:</strong></p>
+            <ul>
+              <li>
+                <strong>Isolamento Absoluto de Dados (Tenant Isolation):</strong> todas as suas contas, categorias e movimentações são estritamente filtradas pelo seu identificador único, prevenindo qualquer tipo de acesso indevido (defesa anti-IDOR).
+              </li>
+              <li>
+                <strong>Proteção contra CSRF:</strong> todas as requisições assíncronas mutadoras anexam o cabeçalho <code>X-CSRFToken</code> sincronizado via meta tag HTML.
+              </li>
+              <li>
+                <strong>Armazenamento Criptografado:</strong> senhas protegidas com hashing adaptativo irreversível com sal (Werkzeug Security).
+              </li>
+              <li>
+                <strong>Cookies Seguros:</strong> sessão HTTP isolada com flags <code>HttpOnly</code> e <code>SameSite=Lax</code>.
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
+                Deseja sair da sua conta?
+              </div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                Encerra sua sessão com segurança neste navegador.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={logout}
+            >
+              🚪 Encerrar Sessão
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   );
