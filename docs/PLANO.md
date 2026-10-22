@@ -238,14 +238,14 @@ Este documento define as fases incrementais para a construção completa do sist
 
 * **Objetivo:** Executar a bateria de testes de validação funcional contra os critérios de aceitação do FSD, conferir as salvaguardas de segurança e consolidar as instruções de deploy no PythonAnywhere.
 * **Checklist de tarefas:**
-  - [ ] Testar isolamento rigoroso por `usuario_id` em todas as rotas (prevenção contra IDOR / HTTP 403);
-  - [ ] Testar bloqueio de força bruta de login com verificação do registro em `logs_seguranca`;
-  - [ ] Testar contingência de logs desconectando o MySQL e verificando escrita em `logs/error.log`;
-  - [ ] Testar proteção CSRF com requisições mutadoras sem token (deve retornar HTTP 400);
-  - [ ] Validar que nenhum item fora de escopo (uploads, conexões bancárias automáticas, moedas estrangeiras, exportações externas) foi adicionado;
-  - [ ] Validar responsividade mobile e tablet;
-  - [ ] Conferir script `wsgi.py` e documentar passos de deploy no PythonAnywhere;
-  - [ ] Validar todos os 25 critérios de aceitação do `docs/FSD.md`.
+  - [x] Testar isolamento rigoroso por `usuario_id` em todas as rotas (prevenção contra IDOR / HTTP 403);
+  - [x] Testar bloqueio de força bruta de login com verificação do registro em `logs_seguranca`;
+  - [x] Testar contingência de logs desconectando o MySQL e verificando escrita em `logs/error.log`;
+  - [x] Testar proteção CSRF com requisições mutadoras sem token (deve retornar HTTP 400);
+  - [x] Validar que nenhum item fora de escopo (uploads, conexões bancárias automáticas, moedas estrangeiras, exportações externas) foi adicionado;
+  - [x] Validar responsividade mobile e tablet;
+  - [x] Conferir script `wsgi.py` e documentar passos de deploy no PythonAnywhere (`docs/DEPLOY.md`);
+  - [x] Validar todos os 25 critérios de aceitação do `docs/FSD.md` com 100% de cobertura nos testes automatizados (`tests/test_fase12_seguranca_validacao.py`).
 * **Critérios de pronto:** Todos os testes aprovados, critérios de aceitação 100% cumpridos, sem falhas de segurança e sistema pronto para produção.
 * **Arquivos e pastas alterados:** Todos os componentes do projeto e documentação.
 * **Dependências:** Fases 1 a 11 concluídas.

@@ -1,8 +1,8 @@
 # Estado Atual do Projeto — FinançasSimples
 
-* **Última atualização:** 2026-10-18 (Conclusão da Fase 11 — Módulo de Configurações, Perfil e Alternância de Tema)
-* **Fase atual:** Fase 11 concluída com 100% de aprovação nos testes automatizados
-* **Próximo passo recomendado:** Iniciar a Fase 12 (Revisão de Segurança, Testes Locais, Validação Final e Preparação para Deploy)
+* **Última atualização:** 2026-10-22 (Conclusão da Fase 12 — Revisão de Segurança, Testes Locais, Validação Final e Preparação para Deploy)
+* **Fase atual:** Fase 12 concluída (Todas as 12 fases do projeto concluídas com 100% de aprovação nos 68 testes automatizados)
+* **Próximo passo recomendado:** Codificação concluída. Abrir um novo chat e executar o prompt de validação de segurança do passo 5.
 
 ---
 
@@ -21,7 +21,7 @@
 | **Fase 9** | Módulo de Lançamentos Recorrentes (Automação de Fixos e Sincronização) | **Concluída** |
 | **Fase 10** | Módulo do Painel Principal (Dashboard, Gráficos e Alertas) | **Concluída** |
 | **Fase 11** | Módulo de Configurações, Perfil e Alternância de Tema | **Concluída** |
-| **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | Pendente |
+| **Fase 12** | Revisão de Segurança, Testes Locais e Preparação para Deploy | **Concluída** |
 
 
 
@@ -142,8 +142,12 @@
 ---
 
 ### Fase 12 — Revisão de Segurança, Testes Locais e Preparação para Deploy
-- [ ] Executar testes de isolamento de dados (prevenção contra IDOR / HTTP 403);
-- [ ] Testar bloqueio de força bruta de login;
-- [ ] Validar contingência de logs desconectando o MySQL temporariamente;
-- [ ] Validar conformidade de todos os 25 critérios de aceitação do FSD;
-- [ ] Documentar procedimento de deploy no PythonAnywhere.
+- [x] Executar testes de isolamento de dados e tenant isolation (prevenção rigorosa contra IDOR / HTTP 403 e 404 em contas, categorias, lançamentos, fixos recorrentes e perfil);
+- [x] Testar bloqueio de força bruta de login (5 falhas consecutivas bloqueando por 15 min com status HTTP 429 e registro auditado em `logs_seguranca`);
+- [x] Testar contingência de logs desconectando o MySQL temporariamente e comprovando gravação com stack trace no arquivo protegido `logs/error.log`;
+- [x] Validar proteção CSRF com requisições mutadoras rejeitadas com HTTP 400 na ausência de token;
+- [x] Validar conformidade estrita de escopo (ausência de uploads, ausência de conexões bancárias automáticas/OFX/Open Finance, ausência de moedas estrangeiras e sem exportações externas);
+- [x] Validar que nenhum arquivo `.env` existe no repositório e que toda a configuração reside em código Python nativo (`config/config.py`);
+- [x] Validar diretivas de proteção de Apache (`.htaccess`) bloqueando acesso a extensões `.py`, `.sql`, `.log` e pastas sensíveis (`app/`, `config/`, `database/`, `logs/`);
+- [x] Conferir ponto de entrada WSGI de produção (`wsgi.py`) e documentar procedimento detalhado de deploy no PythonAnywhere em `docs/DEPLOY.md`;
+- [x] Validar todos os 25 critérios de aceitação técnica e funcional do `docs/FSD.md` com 100% de sucesso na suíte completa de testes automatizados (68 testes aprovados).

@@ -24,51 +24,28 @@ from app.models import (
 )
 from app.utils.auth import login_required, validar_posse
 
+from config.config import Config
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+
 
 class TestFase4Autenticacao(unittest.TestCase):
     """Suíte de testes para a Fase 4."""
 
-    @classmethod
-    def setUpClass(cls):
-        cls.app = create_app()
-        cls.app.config["TESTING"] = True
-        cls.app_context = cls.app.app_context()
-        cls.app_context.push()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.app_context.pop()
-
     def setUp(self):
-        """Prepara o cliente de teste e limpa dados de execuções anteriores."""
+        self.app = create_app(TestConfig)
         self.client = self.app.test_client()
-        self.limpar_dados_teste()
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.create_all()
 
     def tearDown(self):
-        """Limpa dados após cada teste."""
         db.session.remove()
-        self.limpar_dados_teste()
-
-    def limpar_dados_teste(self):
-        """Remove registros com e-mails de teste."""
-        try:
-            usuarios = Usuario.query.filter(Usuario.email.like("%@teste.com")).all()
-            for u in usuarios:
-                LogSeguranca.query.filter_by(usuario_id=u.id).delete()
-                Conta.query.filter_by(usuario_id=u.id).delete()
-                Categoria.query.filter_by(usuario_id=u.id).delete()
-                db.session.delete(u)
-            
-            # Limpa logs de segurança soltos de teste
-            LogSeguranca.query.filter(
-                db.or_(
-                    LogSeguranca.detalhes.like("%@teste.com%"),
-                    LogSeguranca.ip == "192.168.10.50",
-                )
-            ).delete()
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+        db.drop_all()
+        self.app_context.pop()
 
     def test_01_cadastro_sucesso_com_provisionamento(self):
         """Testa o cadastro bem-sucedido e o provisionamento automático das 10 categorias e da carteira padrão."""

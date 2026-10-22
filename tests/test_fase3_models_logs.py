@@ -21,43 +21,28 @@ from app.models import (
 from app.services.logger_service import registrar_erro, registrar_seguranca
 
 
+from config.config import Config
+
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    WTF_CSRF_ENABLED = False
+
+
 class TestFase3ModelsELogs(unittest.TestCase):
     """Suíte de testes para a Fase 3."""
 
-    @classmethod
-    def setUpClass(cls):
-        cls.app = create_app()
-        cls.app_context = cls.app.app_context()
-        cls.app_context.push()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.app_context.pop()
-
     def setUp(self):
-        """Limpa dados de testes anteriores para garantir isolamento."""
-        self.limpar_dados_teste()
+        self.app = create_app(TestConfig)
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.create_all()
 
     def tearDown(self):
-        """Limpa dados gerados após cada teste."""
         db.session.remove()
-        self.limpar_dados_teste()
-
-    def limpar_dados_teste(self):
-        """Remove registros com e-mails de teste."""
-        try:
-            usuarios_teste = Usuario.query.filter(
-                Usuario.email.like("%@teste.com")
-            ).all()
-            for u in usuarios_teste:
-                # Remove logs associados
-                LogErro.query.filter_by(usuario_id=u.id).delete()
-                LogSeguranca.query.filter_by(usuario_id=u.id).delete()
-                # Deleta usuário (cascateia contas, categorias, lançamentos)
-                db.session.delete(u)
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+        db.drop_all()
+        self.app_context.pop()
 
     def test_01_usuario_senha_e_token(self):
         """Testa regras do modelo Usuario (hashing, senha curta, tokens de recuperação)."""
